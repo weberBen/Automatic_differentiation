@@ -12,6 +12,7 @@ sys.path.insert(0, path)
 
 from DualNumber import DualNumber
 from UniversalNum import UniversalNum
+
 #%%
 
 
@@ -52,3 +53,4 @@ d_v = f(x, y) # directionnal derivative
 print("-"*5)
 print("value f at ", a, "=", d_v.primal)
 print("directionnal derivative f at ", a, "for direction ", v, "=", d_v.tangent)
+

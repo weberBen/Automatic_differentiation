@@ -47,7 +47,7 @@ def _findFunction(computation_graph, func_name: str, node):
     
     return None
 
-def _addFunction(computation_graph, func_name: str, node: object, new_node: object):
+def _addFunction(computation_graph, func_name: str, node: object, new_node: object, argv, kwargs):
     
     node_id = _findFunction(computation_graph, func_name, node)
     if node_id is not None:
@@ -56,7 +56,7 @@ def _addFunction(computation_graph, func_name: str, node: object, new_node: obje
 
         return
 
-    computation_graph.add_node(new_node.id, value=None, func_name=func_name, type="function")
+    computation_graph.add_node(new_node.id, func_name=func_name, type="function", value=new_node.item, input_value=node.item, func_argv=argv, func_kwargs=kwargs)
 
     if not computation_graph.has_node(func_name):
         computation_graph.add_node(func_name, value=None, type="functionnal")
@@ -65,10 +65,10 @@ def _addFunction(computation_graph, func_name: str, node: object, new_node: obje
     
     computation_graph.add_edge(node.id, func_name, type="function", func_name=func_name, value=new_node.id)
 
-
+    
     new_node.computation_graph = computation_graph
     
-def _addOperation(computation_graph, operator: str, left: object, right: object, new_node, value=None):
+def _addOperation(computation_graph, operator: str, left: object, right: object, new_node):
     
     if operator not in OPERATORS:
         msg = "Invalid operator '" + str(operator) + "'"
@@ -95,7 +95,7 @@ def _addOperation(computation_graph, operator: str, left: object, right: object,
 
         return
 
-    computation_graph.add_node(new_node.id, value=None, operator=operator, type="operator")
+    computation_graph.add_node(new_node.id, operator=operator, type="operator", value=new_node.item)
     
     computation_graph.add_edge(left.id, new_node.id, operator_relative_position="left")
 
@@ -125,7 +125,7 @@ def _addOperation(computation_graph, operator: str, left: object, right: object,
 
     new_node.computation_graph = computation_graph
 
-def _initComputationGraph(computation_graph, node, value=None):
+def _initComputationGraph(computation_graph, node, value):
     if node.required_autograd:
         computation_graph.add_node(node.id, value=value, type="variable", name=node.label)
     else:
@@ -181,6 +181,41 @@ class Vector:
             return output
         
         return None
+    
+    def __sub__(self, v):
+        _operator = "-"
+
+        if type(v)==int or type(v)==float:
+            v = Vector(v)
+        
+        if type(v) is Vector:
+
+            output = Vector(self.item-v.item)
+            _addOperation(self.computation_graph, _operator, self, v, output)
+            return output
+        
+        return None
+    
+    def __truediv__(self, v):
+        _operator = "/"
+
+        if type(v)==int or type(v)==float:
+            v = Vector(v)
+        
+        if type(v) is Vector:
+
+            output = Vector(self.item/v.item)
+            _addOperation(self.computation_graph, _operator, self, v, output)
+            return output
+        
+        return None
+    
+    def __apply__(self, func_name, function, *argv, **kwargs):
+
+        output = Vector(function(self.item))
+        _addFunction(self.computation_graph, func_name, self, output, argv, kwargs.items())
+
+        return output
 
     def __sin__(self):
         func_name = "sin"
@@ -189,11 +224,30 @@ class Vector:
         _addFunction(self.computation_graph, func_name, self, output)
         return output
     
+    def __cos__(self):
+        func_name = "cos"
+
+        output = Vector(MathLib.cos(self.item))
+        _addFunction(self.computation_graph, func_name, self, output)
+        return output
+    
     def __rmul__(self, v):
         return Vector(v)*self
     
+    def __rsub__(self, v):
+        return Vector(v)-self
+    
+    def __rtruediv__(self, v):
+        return Vector(v)/self
+    
     def __radd__(self, v):
         return Vector(v)+self
+    
+    def __neg__(self):
+        return -1*self
+    
+    def __pos__(self):
+        return self
     
     def __str__(self):
         return "Vector({0})".format(self.item)
@@ -220,4 +274,90 @@ class Vector:
 
         return (G, mapping)
     
+    def backward(self):
+        computation_graph = self._getCleanComputationGraph()
 
+        root = self.computation_graph.nodes[self.id]
+        node_id = self.id
+
+        node_values = {}
+
+        node_values[self.id] = 1 # derivate of v WRT to v is always 1
+
+        while True:
+            for parent_node_id in computation_graph.successors(node_id):
+                parent_node = computation_graph.nodes[parent_node_id]
+
+                child_v = node_values[node_id]
+                dv = None
+
+                if parent_node["type"]=="operator":
+                    operator = parent_node["operator"]
+                    items = list(computation_graph.predecessors(parent_node_id))
+
+
+                    items = list(computation_graph.predecessors(parent_node_id))
+                    node_id_1 = items[0]
+                    node_id_2 = None
+
+                    if len(items)==1: #power of 2
+                        node_id_2 = node_id_1
+                    else:
+                        node_id_2 = items[1]
+
+                    current_node_id = None
+                    other_node_id = None
+                    if node_id_1 == parent_node_id:
+                        current_node_id = node_id_1
+                        other_node_id = node_id_2
+                    else:
+                        current_node_id = node_id_2
+                        other_node_id = node_id_1
+                    
+                    current_edge = None
+                    other_edge = None
+                    edge_1 = None
+                    edge_2 = None
+
+                    if computation_graph.has_edge(parent_node_id, node_id_1):
+                        edge_1 = computation_graph.get_edge_data(parent_node_id, node_id_1)
+
+                    else:
+                        edge_1 = computation_graph.get_edge_data(node_id_1, parent_node_id)
+                    
+                    if computation_graph.has_edge(parent_node_id, node_id_2):
+                        edge_2 = computation_graph.get_edge_data(parent_node_id, node_id_2)
+                    else:
+                        edge_2 = computation_graph.get_edge_data(node_id_2, parent_node_id)
+
+                    if current_node_id==node_id_1:
+                        current_edge = edge_1
+                        other_edge = edge_2
+                    else:
+                        current_edge = edge_2
+                        other_edge = edge_1
+                    
+                    operator_relative_position = current_edge["operator_relative_position"]
+
+                    if operator==OPERATORS["+"]:
+                        dv = 1
+                    elif operator==OPERATORS["-"]:
+                        if operator_relative_position=="left":
+                            dv = 1
+                        else:
+                            dv = -1
+                    elif operator==OPERATORS["*"]:
+                        dv = computation_graph.nodes[other_node_id]["value"]
+                    elif operator==OPERATORS["/"]:
+                        if operator_relative_position=="left":
+                            dv = 1/computation_graph.nodes[other_node_id]["value"]
+                        else:
+                            dv = -1/(parent_node["value"]**2)
+                    
+                    node_values[parent_node_id] = child_v*dv
+                
+                elif parent_node["type"]=="function":
+                    pass
+
+
+#%%

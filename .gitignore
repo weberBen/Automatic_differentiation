@@ -1,2 +1,3 @@
 Sources/
 temp/
+*.pyc
