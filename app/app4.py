@@ -15,8 +15,8 @@ import sys
 # y = a*x + b*x² + sin(x)
 
 #%%
-from src.DualNumber import DualNumber
-from src.UniversalNum import UniversalNum
+
+from src.ComputationLib.Vector import Vector
 
 
 #%%
@@ -26,7 +26,7 @@ from src.UniversalNum import UniversalNum
 
 
 if __name__ == "__main__":
-
+    pass
     # from pyvis.network import Network
 
     # def func(x, y, z):
@@ -155,9 +155,3 @@ if __name__ == "__main__":
 
     # nx.draw_networkx_edge_labels(g, pos, edge_labels=edge_labels)
     # plt.show()
-
-""" def sin(x):
-    try:
-        return x.__sin__()
-    except AttributeError:
-        return math.sin(x) """

@@ -1,13 +1,16 @@
 
 
-
 import math
+
 #%%
 
-from ..src.ComputationLib.Vector import Vector
-from ..src.ComputationLib.ComputationGraph import ComputationGraphProcessor
-from ..src.MathLib.FunctionWrapper import Function
-from ..src.MathLib.Functions import Log, log, Sin, sin
+import __init__
+
+from ComputationLib.Vector import Vector
+from ComputationLib.ComputationGraph import ComputationGraphProcessor
+from MathLib.FunctionWrapper import Function
+from MathLib.Functions import Sin, sin, Log, log
+
 
 #%%
 

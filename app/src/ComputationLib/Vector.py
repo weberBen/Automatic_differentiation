@@ -3,7 +3,7 @@ import networkx as nx
 import uuid
 #%%
 
-from Operator import OPERATORS
+from .Operator import OPERATORS
 
 #%%
 

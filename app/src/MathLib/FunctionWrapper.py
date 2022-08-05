@@ -1,7 +1,7 @@
 
 
 #%%
-from ..ComputationGraph.Vector import Vector
+from ComputationLib.Vector import Vector
 
 #%%
 class Function(object):

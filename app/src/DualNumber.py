@@ -1,4 +1,3 @@
-import MathLib
 
 class DualNumber:
     def __init__(self, primal, tangent=1):
@@ -67,17 +66,3 @@ class DualNumber:
     def __str__(self):
         return "{0} + {1}ɛ".format(self.primal, self.tangent)
     
-    def __sin__(self):
-        return DualNumber(MathLib.sin(self.primal), MathLib.cos(self.primal)*self.tangent)
-    
-    def __cos__(self):
-        return DualNumber(MathLib.cos(self.primal), -MathLib.sin(self.primal)*self.tangent)
-    
-    def __tan__(self):
-        return DualNumber(MathLib.tan(self.primal), -self.tangent/(MathLib.cos(self.primal)**2))
-
-    def __exp__(self):
-        return DualNumber(MathLib.exp(self.primal), MathLib.exp(self.primal)*self.tangent)
-
-    def __log__(self, base=10):
-        return DualNumber(MathLib.log(self.primal, base), self.tangent/self.primal)

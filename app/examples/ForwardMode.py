@@ -1,26 +1,17 @@
-
-
-
 #%%
-import sys
-import os
-from pathlib import Path
 
-path = '%s%ssrc' % (Path(sys.path[0]).parent.absolute(), os.sep)
-sys.path.insert(0, path)
-#%%
+import __init__
 
 from DualNumber import DualNumber
-from UniversalNum import UniversalNum
-
-#%%
+from MathLib.FunctionWrapper import Function
+from MathLib.Functions import sin, cos, tan, log, exp
 
 
 #%%
 
 
 def f(x, y):
-    return UniversalNum.sin(x)*y + 7*(x*x)
+    return sin(x)*y + 7*(x*x)
 
 a = (2, 4)
 

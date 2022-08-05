@@ -1,8 +1,8 @@
 import networkx as nx
 from pyvis.network import Network
 #%%
-from Operator import OPERATORS
-from Vector import Vector
+from .Operator import OPERATORS
+from .Vector import Vector
 #%%
 
 class ComputationGraphProcessor:
