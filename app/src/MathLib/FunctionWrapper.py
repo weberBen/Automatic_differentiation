@@ -2,20 +2,16 @@
 
 #%%
 from ComputationLib.Vector import Vector
+from .FunctionReferences import FunctionRef
 
 #%%
 class Function(object):
-    refs = {}
-
     def __init__(self):
         class_obj =  self.__class__
 
         self.name = class_obj.__name__
 
-        if class_obj.__name__ not in Function.refs :
-            # thread safe since a particular instance is not the target, just the class object without its parameters
-
-            Function.refs[class_obj.__name__] = class_obj # in order to retrieve class by name even if the function has not been defined in that module
+        FunctionRef.add(class_obj)
     
     def compute(input_value, *argv, **kwargs):
         pass

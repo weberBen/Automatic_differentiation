@@ -10,6 +10,7 @@ from ComputationLib.Vector import Vector
 from ComputationLib.ComputationGraph import ComputationGraphProcessor
 from MathLib.FunctionWrapper import Function
 from MathLib.Functions import Sin, sin, Log, log
+from MathLib.FunctionReferences import FunctionRef
 
 
 #%%
@@ -30,14 +31,17 @@ print("z=", z)
 cgp = ComputationGraphProcessor(z)
 #cgp.draw()
 
+gradient = z.backward()
+print(gradient)
+
 (G, mapping) = z._getCleanComputationGraph(human_readable=True)
 
 for (node_id, data) in G.nodes(data=True):
     if ("type" in data) and data["type"]=="function":
         print("d=", data)
 
-        v = Function.refs[data["func_name"]]()._compute(data["input_value"], *data["func_argv"], **dict(data["func_kwargs"]))
-        dv = Function.refs[data["func_name"]]()._derivative(data["input_value"], *data["func_argv"], **dict(data["func_kwargs"]))
+        v = FunctionRef.get(data["func_name"])()._compute(data["input_value"], *data["func_argv"], **dict(data["func_kwargs"]))
+        dv = FunctionRef.get(data["func_name"])()._derivative(data["input_value"], *data["func_argv"], **dict(data["func_kwargs"]))
         print("v=", v, "dv=", dv)
 
 # import networkx as nx

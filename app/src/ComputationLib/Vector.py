@@ -4,6 +4,7 @@ import uuid
 #%%
 
 from .Operator import OPERATORS
+from MathLib.FunctionReferences import FunctionRef
 
 #%%
 
@@ -261,89 +262,141 @@ class Vector:
         return (G, mapping)
     
     def backward(self):
-        computation_graph = self._getCleanComputationGraph()
+        (computation_graph, ids_mapping) = self._getCleanComputationGraph(human_readable=False)
 
-        root = self.computation_graph.nodes[self.id]
-        node_id = self.id
+        nodes_to_process = [self.id]
 
-        node_values = {}
+        nodes_dv = {}
+        nodes_dv[self.id] = 1 # dx/dx=1
 
-        node_values[self.id] = 1 # derivate of v WRT to v is always 1
+        while len(nodes_to_process)>0:
+            current_node_id = nodes_to_process.pop(0)
+            
+            #                |---->   children_node_1
+            #                | |--> children_node_2
+            #  parent_node_1 ----
+            #                    ----------> current_node_id
+            #  parent_node_2 ----
+            # 
+            # From the current node, we want to compute the derivative of the parent node, the predecessors
+            # For that we need to get all the output relationships into which a parent node is implied, we need
+            # to get the children of the parent node. One of thta children is the current node but a parent node could
+            # have more than one output (so the current node could not the only child of that parent node) 
 
-        while True:
-            for parent_node_id in computation_graph.successors(node_id):
+            node_appended = {}
+            for parent_node_id in computation_graph.predecessors(current_node_id):
                 parent_node = computation_graph.nodes[parent_node_id]
-
-                child_v = node_values[node_id]
-                dv = None
-
-                if parent_node["type"]=="operator":
-                    operator = parent_node["operator"]
-                    items = list(computation_graph.predecessors(parent_node_id))
-
-
-                    items = list(computation_graph.predecessors(parent_node_id))
-                    node_id_1 = items[0]
-                    node_id_2 = None
-
-                    if len(items)==1: #power of 2
-                        node_id_2 = node_id_1
-                    else:
-                        node_id_2 = items[1]
-
-                    current_node_id = None
-                    other_node_id = None
-                    if node_id_1 == parent_node_id:
-                        current_node_id = node_id_1
-                        other_node_id = node_id_2
-                    else:
-                        current_node_id = node_id_2
-                        other_node_id = node_id_1
-                    
-                    current_edge = None
-                    other_edge = None
-                    edge_1 = None
-                    edge_2 = None
-
-                    if computation_graph.has_edge(parent_node_id, node_id_1):
-                        edge_1 = computation_graph.get_edge_data(parent_node_id, node_id_1)
-
-                    else:
-                        edge_1 = computation_graph.get_edge_data(node_id_1, parent_node_id)
-                    
-                    if computation_graph.has_edge(parent_node_id, node_id_2):
-                        edge_2 = computation_graph.get_edge_data(parent_node_id, node_id_2)
-                    else:
-                        edge_2 = computation_graph.get_edge_data(node_id_2, parent_node_id)
-
-                    if current_node_id==node_id_1:
-                        current_edge = edge_1
-                        other_edge = edge_2
-                    else:
-                        current_edge = edge_2
-                        other_edge = edge_1
-                    
-                    operator_relative_position = current_edge["operator_relative_position"]
-
-                    if operator==OPERATORS["+"]:
-                        dv = 1
-                    elif operator==OPERATORS["-"]:
-                        if operator_relative_position=="left":
-                            dv = 1
-                        else:
-                            dv = -1
-                    elif operator==OPERATORS["*"]:
-                        dv = computation_graph.nodes[other_node_id]["value"]
-                    elif operator==OPERATORS["/"]:
-                        if operator_relative_position=="left":
-                            dv = 1/computation_graph.nodes[other_node_id]["value"]
-                        else:
-                            dv = -1/(parent_node["value"]**2)
-                    
-                    node_values[parent_node_id] = child_v*dv
+                dv_parent = 0 # dv=Derivative Value
+                is_computable = True
                 
-                elif parent_node["type"]=="function":
-                    pass
+                for child_node_id in computation_graph.successors(parent_node_id):
+                    
+                    # A parent node could be not computable at that time because we did not processed one of its child
+                    # because that child is deeper in the graph
+                    # Then we need to put process that child later but for the case when a parent node can be computed
+                    # we use the same loop to compute the possible derivtaive
 
+                    if child_node_id not in nodes_dv:
+                        is_computable = False
+
+                        if (child_node_id not in node_appended):
+                            nodes_to_process.append(child_node_id)
+                            node_appended[child_node_id] = True
+
+                    
+                    _node = computation_graph.nodes[child_node_id]
+
+                    if child_node_id in nodes_dv:
+                        _dv_child = nodes_dv[child_node_id] # total derivative for that child
+                        _dv = None # derivative of the current child with respect to the parent
+                        
+                        if _node["type"]=="operator":
+                            # The child node is part of an operation tha could be self referenced (reflective operator on the child node, ie x*x, x+x, x/x, ...)
+                            # or it could be one node of that operation. The we need to get that second node because its value will be needed to compute the
+                            # derivative of that child node (ie: if the child node is x and the other node is y, then to compute the derivative of x*y, we need the
+                            # value of y)
+                            # 
+                            #
+                            #                       other_node (y) ---
+                            #                                         |------->  operation(+,-,*,/, ...) ----> another_node
+                            #                                             |
+                            #                |--->  child_1 (x) -----------
+                            #                |
+                            # parent_node ---------------------------------------------------> current_node
+                            #                |
+                            #                |--->  child_2 ---> ...
+                            #
+                            #
+                            operator = _node["operator"]
+                            
+                            _node_operation_position = computation_graph.get_edge_data(parent_node_id, child_node_id)["operator_relative_position"]
+                            
+                            ##### get the other node
+                            _other_node = None
+                            is_self_operation = False
+
+                            _nodes_operation = list(computation_graph.predecessors(child_node_id)) # len in {1,2}
+                            
+                            if len(_nodes_operation)==1:
+                                is_self_operation = True
+                            else:
+                                
+                                _other_node_id = None
+                                if _nodes_operation[0]!=parent_node_id:
+                                    _other_node_id = _nodes_operation[0]
+                                else:
+                                    _other_node_id = _nodes_operation[1]
+                            
+                                _other_node = computation_graph.nodes[_other_node_id]
+                            #####
+                            
+                            if operator=="+":
+                                if is_self_operation: # x+x=2*x, dv=2
+                                    _dv = 2
+                                else: # x+y or y+x, dv=1
+                                    _dv = 1
+                            elif operator=="*":
+                                if is_self_operation: # x^2, dv=2*x
+                                    _dv = 2*_node["value"]
+                                else: # x*y or y*x, dv=y
+                                    _dv = _other_node["value"]
+                            elif operator=="-":
+                                if is_self_operation: # x-x=0, dv=0
+                                    _dv = 0
+                                else: #x-y or y-x, dv=1 or dv=-1
+                                    if _node_operation_position=="left":
+                                        _dv = 1
+                                    else:
+                                        _dv = -1
+                            elif operator=="/":
+                                if is_self_operation: # x/x=1, dv=0
+                                    _dv=0
+                                else: # x/y or y/x, dv=1/y or dv=-y/x^2
+                                    if _node_operation_position=="left":
+                                        _dv = 1/_other_node["value"]
+                                    else:
+                                        _dv = -1*_other_node["value"]/(_node["value"]**2)
+                            else:
+                                msg = "invalid operator '{0}'".format(operator)
+                                raise Exception(msg)
+                        
+                        elif _node["type"]=="function":
+
+                            func_name = _node["func_name"]
+                            func_argv = _node["func_argv"]
+                            func_kwargs = dict(_node["func_kwargs"])
+                            input_value = parent_node["value"] # or input_value = _nodes["input_value"]
+
+                            _dv = FunctionRef.getNew(func_name)._derivative(input_value, *func_argv, **func_kwargs)
+                        else:
+                            msg = "invalid node type '{0}'".format(_node["type"])
+                            raise Exception(msg)
+                        
+                        dv_parent += _dv_child*_dv
+                
+                if is_computable:
+                    nodes_dv[parent_node_id] = dv_parent
+                    
+        return nodes_dv
 
 #%%
