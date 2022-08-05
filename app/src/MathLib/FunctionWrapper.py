@@ -1,7 +1,9 @@
 
-import math 
-from Vector import Vector
 
+#%%
+from ..ComputationGraph.Vector import Vector
+
+#%%
 class Function(object):
     refs = {}
 
@@ -41,31 +43,3 @@ class Function(object):
     
     def __str__(self):
          return "Function({0})".format(self.name)
-
-#%%
-
-class Sin(Function) :
-    def __init__(self):
-        super().__init__() # needed
-    
-    def compute(self, input_value):
-        return math.sin(input_value)
-    
-    def derivative(self, input_value):
-        return math.cos(input_value)
-
-sin = Sin().apply()
-
-#%%
-class Log(Function) :
-    def __init__(self):
-        super().__init__() # needed
-    
-    def compute(self, input_value, base=10):
-        return math.log(input_value, base=base)
-    
-    def derivative(self, input_value, base=10):
-        return 1/(math.log(base, base=2)*input_value)
-    
-
-log = Log().apply()

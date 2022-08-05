@@ -2,7 +2,7 @@
 import networkx as nx
 import uuid
 #%%
-import MathLib
+
 from Operator import OPERATORS
 
 #%%
@@ -15,35 +15,28 @@ def _findOperation(computation_graph, operator: str, left, right):
         raise Exception(msg)
     
     if computation_graph.has_edge(left.id, right.id):
-        data = computation_graph.get_edge_data(left.id, right.id, default={})
 
-        #for (key, item) in data.items():
-        item = data
-        if ("type" in item) and ("operator" in item):
-            if item["type"]=="operation" and item["operator"]==operator:
-                return item["value"]
+        for (_key, item) in  computation_graph.get_edge_data(left.id, right.id, default={}).items():
+            if ("type" in item) and ("operator" in item):
+                if item["type"]=="operation" and item["operator"]==operator:
+                    return item["value"]
     
     if OPERATORS[operator]["commutative"]:
 
         if computation_graph.has_edge(right.id, left.id):
-            data = computation_graph.get_edge_data(right.id, left.id, default={}) #not right and left id
-            #for (key, item) in data.items():
-            item = data
-            if ("type" in item) and ("operator" in item):
-                if item["type"]=="operation" and item["operator"]==operator:
-                    return item["value"]
+            for (_key, item) in  computation_graph.get_edge_data(right.id, left.id, default={}).items(): #not right and left id
+                if ("type" in item) and ("operator" in item):
+                    if item["type"]=="operation" and item["operator"]==operator:
+                        return item["value"]
     
     return None
 
 def _findFunction(computation_graph, func_name: str, node):
 
     if computation_graph.has_edge(node.id, func_name):
-        data = computation_graph.get_edge_data(node.id, func_name, default={})
-
-        #for (key, item) in data.items():
-        item = data
-        if ("type" in item) and (item["type"] == "function"):
-            return item["value"]
+        for (_key, item) in  computation_graph.get_edge_data(node.id, func_name, default={}).items():
+            if ("type" in item) and (item["type"] == "function"):
+                return item["value"]
     
     return None
 
@@ -65,7 +58,7 @@ def _addFunction(computation_graph, func_name: str, node: object, new_node: obje
     
     computation_graph.add_edge(node.id, func_name, type="function", func_name=func_name, value=new_node.id)
 
-    
+
     new_node.computation_graph = computation_graph
     
 def _addOperation(computation_graph, operator: str, left: object, right: object, new_node):
@@ -77,10 +70,10 @@ def _addOperation(computation_graph, operator: str, left: object, right: object,
     is_constant = False
     if right.computation_graph.size()==0: # if reuiqred_autograd then computation_graph is at least populated with a single node that represente the vector
         is_constant=True
-    
 
-    left.computation_graph.add_edges_from(right.computation_graph.edges(data=True))
-    left.computation_graph.add_nodes_from(right.computation_graph.nodes(data=True))
+    if left.computation_graph is not right.computation_graph:
+        left.computation_graph.add_edges_from(right.computation_graph.edges(data=True))
+        left.computation_graph.add_nodes_from(right.computation_graph.nodes(data=True))
 
     computation_graph = left.computation_graph
 
@@ -88,8 +81,9 @@ def _addOperation(computation_graph, operator: str, left: object, right: object,
     if node_id is not None:
         new_node.id = node_id
 
-        right.computation_graph.add_edges_from(computation_graph.edges(data=True))
-        right.computation_graph.add_nodes_from(computation_graph.nodes(data=True))
+        if right.computation_graph is not left.computation_graph:
+            right.computation_graph.add_edges_from(computation_graph.edges(data=True))
+            right.computation_graph.add_nodes_from(computation_graph.nodes(data=True))
 
         new_node.computation_graph = computation_graph
 
@@ -138,7 +132,7 @@ class Vector:
         self.item = value
         self.id = _id if _id is not None else str(uuid.uuid4())
 
-        self.computation_graph = _computation_graph if _computation_graph is not None else nx.DiGraph()
+        self.computation_graph = _computation_graph if _computation_graph is not None else nx.MultiDiGraph()
         self.required_autograd = required_autograd
         self.label = label
 
@@ -212,23 +206,9 @@ class Vector:
     
     def __apply__(self, func_name, function, *argv, **kwargs):
 
-        output = Vector(function(self.item))
+        output = Vector(function(self.item, *argv, **kwargs)) # computation in function are already detached from the computation graph since we pass only the value and not the vector
         _addFunction(self.computation_graph, func_name, self, output, argv, kwargs.items())
 
-        return output
-
-    def __sin__(self):
-        func_name = "sin"
-
-        output = Vector(MathLib.sin(self.item))
-        _addFunction(self.computation_graph, func_name, self, output)
-        return output
-    
-    def __cos__(self):
-        func_name = "cos"
-
-        output = Vector(MathLib.cos(self.item))
-        _addFunction(self.computation_graph, func_name, self, output)
         return output
     
     def __rmul__(self, v):
@@ -253,13 +233,19 @@ class Vector:
         return "Vector({0})".format(self.item)
     
     def _getCleanComputationGraph(self, human_readable=False):
-        G = nx.Graph.copy(self.computation_graph)
+        G = nx.DiGraph()
 
-        edges_to_remove = [(node_from, node_to) for (node_from, node_to, data) in G.edges(data=True) if ("type" in data)]
-        nodes_to_remove = [node for (node, data) in G.nodes(data=True) if (("type" in data) and (data["type"]=="functionnal"))]
+        for (node, data) in self.computation_graph.nodes(data=True):
+            if ("type" in data) and (data["type"]=="functionnal"):
+                continue
 
-        G.remove_edges_from(edges_to_remove)
-        G.remove_nodes_from(nodes_to_remove)
+            G.add_node(node, **data)
+        
+        for (node_from, node_to, data) in self.computation_graph.edges(data=True):
+            if "type" in data :
+                continue
+
+            G.add_edge(node_from, node_to, **data)
 
         mapping = None
         if human_readable:

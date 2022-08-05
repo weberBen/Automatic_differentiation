@@ -2,7 +2,7 @@ import networkx as nx
 from pyvis.network import Network
 #%%
 from Operator import OPERATORS
-import Vector
+from Vector import Vector
 #%%
 
 class ComputationGraphProcessor:
