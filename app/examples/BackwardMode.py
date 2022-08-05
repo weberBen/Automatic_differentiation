@@ -23,16 +23,17 @@ from MathLib.FunctionReferences import FunctionRef
 
     # v = t*2 + UniversalNum.sin(x*y)
 
-x = Vector(14.23, required_autograd=True, label="x")
-y = Vector(8, required_autograd=True, label="y")
+
+x = Vector(14.23, requires_grad=True, label="x")
+y = Vector(8, requires_grad=True, label="y")
 
 z = log(x, base=14) + x
 print("z=", z)
-cgp = ComputationGraphProcessor(z)
-#cgp.draw()
 
 gradient = z.backward()
-print(gradient)
+
+cgp = ComputationGraphProcessor(z)
+#cgp.draw()
 
 (G, mapping) = z._getCleanComputationGraph(human_readable=True)
 

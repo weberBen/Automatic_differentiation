@@ -121,7 +121,7 @@ def _addOperation(computation_graph, operator: str, left: object, right: object,
     new_node.computation_graph = computation_graph
 
 def _initComputationGraph(computation_graph, node, value):
-    if node.required_autograd:
+    if node.requires_grad:
         computation_graph.add_node(node.id, value=value, type="variable", name=node.label)
     else:
         computation_graph.add_node(node.id, value=value, type="constant")
@@ -129,12 +129,12 @@ def _initComputationGraph(computation_graph, node, value):
 
 class Vector:
 
-    def __init__(self, value, required_autograd=False, _id=None, _computation_graph=None, label=None):
+    def __init__(self, value, requires_grad=False, _id=None, _computation_graph=None, label=None):
         self.item = value
         self.id = _id if _id is not None else str(uuid.uuid4())
 
         self.computation_graph = _computation_graph if _computation_graph is not None else nx.MultiDiGraph()
-        self.required_autograd = required_autograd
+        self.requires_grad = requires_grad
         self.label = label
 
         _initComputationGraph(self.computation_graph, self, value=self.item)
@@ -272,11 +272,15 @@ class Vector:
         while len(nodes_to_process)>0:
             current_node_id = nodes_to_process.pop(0)
             
-            #                |---->   children_node_1
-            #                | |--> children_node_2
-            #  parent_node_1 ----
-            #                    ----------> current_node_id
-            #  parent_node_2 ----
+            #
+            #
+            #                    |----> children_node_1
+            #                    |  
+            #  parent_node_1 --->|---> children_node_2
+            #                    |
+            #                    |---->|---> current_node_id
+            #                          |
+            #  parent_node_2 --------->| ...
             # 
             # From the current node, we want to compute the derivative of the parent node, the predecessors
             # For that we need to get all the output relationships into which a parent node is implied, we need
@@ -317,12 +321,12 @@ class Vector:
                             # value of y)
                             # 
                             #
-                            #                       other_node (y) ---
-                            #                                         |------->  operation(+,-,*,/, ...) ----> another_node
-                            #                                             |
-                            #                |--->  child_1 (x) -----------
+                            #                      other_node (y) --->|
+                            #                                         |--->|--->  operation(+,-,*,/, ...) ----> another_node
+                            #                                              |
+                            #                |--->  child_1 (x) ---------->|
                             #                |
-                            # parent_node ---------------------------------------------------> current_node
+                            # parent_node -->|-----------------------------------------------> current_node
                             #                |
                             #                |--->  child_2 ---> ...
                             #
@@ -331,7 +335,7 @@ class Vector:
                             
                             _node_operation_position = computation_graph.get_edge_data(parent_node_id, child_node_id)["operator_relative_position"]
                             
-                            ##### get the other node
+                            ##### retrieve the other node
                             _other_node = None
                             is_self_operation = False
 
@@ -393,6 +397,7 @@ class Vector:
                             raise Exception(msg)
                         
                         dv_parent += _dv_child*_dv
+                        # Todo: optimise the computation by storing the partial sum for the rest of the computation later
                 
                 if is_computable:
                     nodes_dv[parent_node_id] = dv_parent
