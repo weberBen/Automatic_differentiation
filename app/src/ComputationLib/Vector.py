@@ -290,7 +290,7 @@ class Vector:
         self.label = label
 
         # partial derivative value that will be updated when computing the gradient of the function with respect to that variable
-        self.grad = None
+        self.grad = 0
         
         if _init_computation_graph:
             _initComputationGraph(self.computation_graph, self, value=self.item)

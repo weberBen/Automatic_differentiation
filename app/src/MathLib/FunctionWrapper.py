@@ -14,9 +14,13 @@ class Function(object):
         FunctionRef.add(class_obj)
     
     def compute(input_value, *argv, **kwargs):
+        # Need to be implemented by children classes
+        # input_value is int/float
         pass
 
     def derivative(self, input_value, *argv, **kwargs):
+        # Need to be implemented by children classes
+        # input_value is int/float
         pass
     
     def _compute(self, input_value, *argv, **kwargs):
