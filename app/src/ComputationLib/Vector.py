@@ -1,6 +1,8 @@
 
 import networkx as nx
 import uuid
+
+from regex import R
 #%%
 
 from .Operator import OPERATORS
@@ -122,7 +124,8 @@ def _addOperation(computation_graph, operator: str, left: object, right: object,
 
 def _initComputationGraph(computation_graph, node, value):
     if node.requires_grad:
-        computation_graph.add_node(node.id, value=value, type="variable", name=node.label)
+        computation_graph.add_node(node.id, value=value, type="variable", name=node.label, ref=node) 
+        # ref is used to access the node later to set the gradient value (just for ease of use and does not interact with the computation graph process)
     else:
         computation_graph.add_node(node.id, value=value, type="constant")
 
@@ -136,6 +139,8 @@ class Vector:
         self.computation_graph = _computation_graph if _computation_graph is not None else nx.MultiDiGraph()
         self.requires_grad = requires_grad
         self.label = label
+
+        self.grad = None
 
         _initComputationGraph(self.computation_graph, self, value=self.item)
 
@@ -236,14 +241,42 @@ class Vector:
     def _getCleanComputationGraph(self, human_readable=False):
         G = nx.DiGraph()
 
+        unused_nodes = {}
         for (node, data) in self.computation_graph.nodes(data=True):
             if ("type" in data) and (data["type"]=="functionnal"):
                 continue
+            
+            try:
+                next(self.computation_graph.successors(node))
+            except StopIteration: # node has no output/child (then unused node)
 
+                if node!=self.id:
+                    
+                    _nodes_to_remove = [node]
+
+                    # need to find simple circle nx.simple_circle(G)
+
+                    while len(_nodes_to_remove)>0:
+                        _node = _nodes_to_remove.pop(0)
+
+                        for _node_id in self.computation_graph.predecessors(_node):
+
+                            pass
+
+                        unused_nodes[_node] = True
+
+                    continue
+
+            if node in unused_nodes:
+                continue
+            
             G.add_node(node, **data)
         
         for (node_from, node_to, data) in self.computation_graph.edges(data=True):
             if "type" in data :
+                continue
+            
+            if (node_to in unused_nodes):
                 continue
 
             G.add_edge(node_from, node_to, **data)
@@ -261,16 +294,151 @@ class Vector:
 
         return (G, mapping)
     
+    @staticmethod
+    def _partialDerivative(computation_graph, nodes_visited, nodes_to_process, nodes_dv, parent_node_id, parent_node):
+
+        dv_parent = 0 # dv=Derivative Value
+        is_computable = True
+
+        for child_node_id in computation_graph.successors(parent_node_id):
+
+            # A parent node could be not computable at that time because we did not processed one of its child
+            # because that child is deeper in the graph
+
+            if child_node_id not in nodes_dv:
+                is_computable = False
+
+                if (child_node_id not in nodes_visited):
+                    nodes_to_process.append(child_node_id)
+                    nodes_visited[child_node_id] = True
+
+            
+            _node = computation_graph.nodes[child_node_id]
+            
+
+            if child_node_id in nodes_dv:
+                _dv_child = nodes_dv[child_node_id] # total derivative for that child
+                _dv = None # derivative of the current child with respect to the parent
+                
+                if _node["type"]=="operator":
+                    # The child node is part of an operation tha could be self referenced (reflective operator on the child node, ie x*x, x+x, x/x, ...)
+                    # or it could be one node of that operation. The we need to get that second node because its value will be needed to compute the
+                    # derivative of that child node (ie: if the child node is x and the other node is y, then to compute the derivative of x*y, we need the
+                    # value of y)
+                    # 
+                    #
+                    #                      other_node (y) --->|
+                    #                                         |--->|--->  operation(+,-,*,/, ...) ----> another_node
+                    #                                              |
+                    #                |--->  child_1 (x) ---------->|
+                    #                |
+                    # parent_node -->|-----------------------------------------------> current_node
+                    #                |
+                    #                |--->  child_2 ---> ...
+                    #
+                    #
+                    operator = _node["operator"]
+                    
+                    _node_operation_position = computation_graph.get_edge_data(parent_node_id, child_node_id)["operator_relative_position"]
+                    
+                    ##### retrieve the other node
+                    _other_node = None
+                    is_self_operation = False
+
+                    _nodes_operation = list(computation_graph.predecessors(child_node_id)) # len in {1,2}
+                    
+                    if len(_nodes_operation)==1:
+                        is_self_operation = True
+                    else:
+                        
+                        _other_node_id = None
+                        if _nodes_operation[0]!=parent_node_id:
+                            _other_node_id = _nodes_operation[0]
+                        else:
+                            _other_node_id = _nodes_operation[1]
+                    
+                        _other_node = computation_graph.nodes[_other_node_id]
+                    #####
+
+                    if operator=="+":
+                        if is_self_operation: # x+x=2*x, dv=2
+                            _dv = 2
+                        else: # x+y or y+x, dv=1
+                            _dv = 1
+                    elif operator=="*":
+                        
+                        if is_self_operation: # x^2, dv=2*x
+                            _dv = 2*_node["value"]
+                        else: # x*y or y*x, dv=y
+                            _dv = _other_node["value"]
+                    elif operator=="-":
+                        if is_self_operation: # x-x=0, dv=0
+                            _dv = 0
+                        else: #x-y or y-x, dv=1 or dv=-1
+                            if _node_operation_position=="left":
+                                _dv = 1
+                            else:
+                                _dv = -1
+                    elif operator=="/":
+                        if is_self_operation: # x/x=1, dv=0
+                            _dv=0
+                        else: # x/y or y/x, dv=1/y or dv=-y/x^2
+                            if _node_operation_position=="left":
+                                _dv = 1/_other_node["value"]
+                            else:
+                                _dv = -1*_other_node["value"]/(_node["value"]**2)
+                    else:
+                        msg = "invalid operator '{0}'".format(operator)
+                        raise Exception(msg)
+                
+                elif _node["type"]=="function":
+
+                    func_name = _node["func_name"]
+                    func_argv = _node["func_argv"]
+                    func_kwargs = dict(_node["func_kwargs"])
+                    input_value = parent_node["value"] # or input_value = _nodes["input_value"]
+
+                    _dv = FunctionRef.getNew(func_name)._derivative(input_value, *func_argv, **func_kwargs)
+                
+                else:
+                    msg = "invalid node type '{0}'".format(_node["type"])
+                    raise Exception(msg)
+
+                dv_parent += _dv_child*_dv
+                # Todo: optimise the computation by storing the partial sum for the rest of the computation later
+
+        if is_computable:
+            nodes_dv[parent_node_id] = dv_parent
+
+            if ("type" in parent_node) and (parent_node["type"]=="variable") and ("ref" in parent_node):
+                variable_ref_obj = parent_node["ref"]
+                variable_ref_obj.grad = dv_parent
+
+        return is_computable
+        
+    
     def backward(self):
         (computation_graph, ids_mapping) = self._getCleanComputationGraph(human_readable=False)
-
-        nodes_to_process = [self.id]
+        
+        # This list will hold a serie of nodes id that satisfay the dependencies of each node to allow the computation
+        # This is not necessary the shortest path to resolve the problem
+        nodes_to_process = [self.id] 
 
         nodes_dv = {}
         nodes_dv[self.id] = 1 # dx/dx=1
 
+        root_node = computation_graph.nodes[self.id]
+        if ("type" in root_node) and (root_node["type"]=="variable") and ("ref" in root_node):
+            # node to perform autograd onto is the variable (x=variable, z=x, autograd on z)
+            variable_ref_obj = root_node["ref"]
+            variable_ref_obj.grad = 1
+            
+            return nodes_dv
+        
         while len(nodes_to_process)>0:
             current_node_id = nodes_to_process.pop(0)
+
+            nodes_visited = {}
             
             #
             #
@@ -286,122 +454,21 @@ class Vector:
             # For that we need to get all the output relationships into which a parent node is implied, we need
             # to get the children of the parent node. One of thta children is the current node but a parent node could
             # have more than one output (so the current node could not the only child of that parent node) 
+            
+            for parent_node_id in computation_graph.predecessors(current_node_id): # avoid using list that will load all nodes in memory, instead use cursor
 
-            node_appended = {}
-            for parent_node_id in computation_graph.predecessors(current_node_id):
                 parent_node = computation_graph.nodes[parent_node_id]
-                dv_parent = 0 # dv=Derivative Value
-                is_computable = True
-                
-                for child_node_id in computation_graph.successors(parent_node_id):
-                    
-                    # A parent node could be not computable at that time because we did not processed one of its child
-                    # because that child is deeper in the graph
-                    # Then we need to put process that child later but for the case when a parent node can be computed
-                    # we use the same loop to compute the possible derivtaive
 
-                    if child_node_id not in nodes_dv:
-                        is_computable = False
+                if ("type" in parent_node) and (parent_node["type"]=="constant"): # else will use the chain rules to compute derivative as if it was a variable
+                    continue
 
-                        if (child_node_id not in node_appended):
-                            nodes_to_process.append(child_node_id)
-                            node_appended[child_node_id] = True
+                is_computable = Vector._partialDerivative(computation_graph, nodes_visited, nodes_to_process, nodes_dv, parent_node_id, parent_node)
 
-                    
-                    _node = computation_graph.nodes[child_node_id]
+                if is_computable and (parent_node_id not in nodes_visited):
+                    nodes_to_process.append(parent_node_id)
+                    nodes_visited[parent_node_id] = True
 
-                    if child_node_id in nodes_dv:
-                        _dv_child = nodes_dv[child_node_id] # total derivative for that child
-                        _dv = None # derivative of the current child with respect to the parent
-                        
-                        if _node["type"]=="operator":
-                            # The child node is part of an operation tha could be self referenced (reflective operator on the child node, ie x*x, x+x, x/x, ...)
-                            # or it could be one node of that operation. The we need to get that second node because its value will be needed to compute the
-                            # derivative of that child node (ie: if the child node is x and the other node is y, then to compute the derivative of x*y, we need the
-                            # value of y)
-                            # 
-                            #
-                            #                      other_node (y) --->|
-                            #                                         |--->|--->  operation(+,-,*,/, ...) ----> another_node
-                            #                                              |
-                            #                |--->  child_1 (x) ---------->|
-                            #                |
-                            # parent_node -->|-----------------------------------------------> current_node
-                            #                |
-                            #                |--->  child_2 ---> ...
-                            #
-                            #
-                            operator = _node["operator"]
-                            
-                            _node_operation_position = computation_graph.get_edge_data(parent_node_id, child_node_id)["operator_relative_position"]
-                            
-                            ##### retrieve the other node
-                            _other_node = None
-                            is_self_operation = False
-
-                            _nodes_operation = list(computation_graph.predecessors(child_node_id)) # len in {1,2}
-                            
-                            if len(_nodes_operation)==1:
-                                is_self_operation = True
-                            else:
-                                
-                                _other_node_id = None
-                                if _nodes_operation[0]!=parent_node_id:
-                                    _other_node_id = _nodes_operation[0]
-                                else:
-                                    _other_node_id = _nodes_operation[1]
-                            
-                                _other_node = computation_graph.nodes[_other_node_id]
-                            #####
-                            
-                            if operator=="+":
-                                if is_self_operation: # x+x=2*x, dv=2
-                                    _dv = 2
-                                else: # x+y or y+x, dv=1
-                                    _dv = 1
-                            elif operator=="*":
-                                if is_self_operation: # x^2, dv=2*x
-                                    _dv = 2*_node["value"]
-                                else: # x*y or y*x, dv=y
-                                    _dv = _other_node["value"]
-                            elif operator=="-":
-                                if is_self_operation: # x-x=0, dv=0
-                                    _dv = 0
-                                else: #x-y or y-x, dv=1 or dv=-1
-                                    if _node_operation_position=="left":
-                                        _dv = 1
-                                    else:
-                                        _dv = -1
-                            elif operator=="/":
-                                if is_self_operation: # x/x=1, dv=0
-                                    _dv=0
-                                else: # x/y or y/x, dv=1/y or dv=-y/x^2
-                                    if _node_operation_position=="left":
-                                        _dv = 1/_other_node["value"]
-                                    else:
-                                        _dv = -1*_other_node["value"]/(_node["value"]**2)
-                            else:
-                                msg = "invalid operator '{0}'".format(operator)
-                                raise Exception(msg)
-                        
-                        elif _node["type"]=="function":
-
-                            func_name = _node["func_name"]
-                            func_argv = _node["func_argv"]
-                            func_kwargs = dict(_node["func_kwargs"])
-                            input_value = parent_node["value"] # or input_value = _nodes["input_value"]
-
-                            _dv = FunctionRef.getNew(func_name)._derivative(input_value, *func_argv, **func_kwargs)
-                        else:
-                            msg = "invalid node type '{0}'".format(_node["type"])
-                            raise Exception(msg)
-                        
-                        dv_parent += _dv_child*_dv
-                        # Todo: optimise the computation by storing the partial sum for the rest of the computation later
-                
-                if is_computable:
-                    nodes_dv[parent_node_id] = dv_parent
-                    
+        
         return nodes_dv
 
 #%%

@@ -48,12 +48,22 @@ class ComputationGraphProcessor:
         
         return str(data["type"])
     
+    @staticmethod
+    def formatNodeTitle(node_id, data, display_nodes_value):
+        title = f'id({node_id})'
+        if display_nodes_value and ("value" in data):
+            title =  title + '''
+            value(''' + str(data["value"]) + ''')
+            '''
+        
+        return title
+
     def getLocalNodeId(self, node_id):
         if self.graph_mapping is None:
             return node_id
         return self.graph_mapping[node_id]
     
-    def draw(self, layout=False, width="100%", height="100%"):
+    def draw(self, layout=False, width="100%", height="100%", display_nodes_value=False):
         G = self.computation_graph
 
         nt = Network(width, height, directed=True, layout=layout)
@@ -64,7 +74,9 @@ class ComputationGraphProcessor:
                 font_size = "25"
             
             label = ComputationGraphProcessor.formatNodeLabel(node_id, data)
-            nt.add_node(node_id, label=label, group=data["type"], title=f'id({node_id})', font=f'{font_size}px')
+            title = ComputationGraphProcessor.formatNodeTitle(node_id, data, display_nodes_value)
+            
+            nt.add_node(node_id, label=label, group=data["type"], title=title, font=f'{font_size}px')
         
         for (node_from_id, node_to_id, data) in G.edges(data=True):
 
@@ -76,6 +88,7 @@ class ComputationGraphProcessor:
         
 
         root_node_id = self.getLocalNodeId(self.end_vector.id)
+
         nt.add_node("output", label="output", group="output", title=f'id({root_node_id})')
         nt.add_edge(root_node_id, "output", physics=True, title="output")
 

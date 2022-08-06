@@ -26,24 +26,33 @@ from MathLib.FunctionReferences import FunctionRef
 
 x = Vector(14.23, requires_grad=True, label="x")
 y = Vector(8, requires_grad=True, label="y")
+z = Vector(6.96, requires_grad=True, label="z")
+#z = log(x, base=14) + x*y + y*sin(y) + x*y
 
-z = log(x, base=14) + x
-print("z=", z)
+d = y+x+3
+v = x+y + z
 
-gradient = z.backward()
+print("z=", v)
 
-cgp = ComputationGraphProcessor(z)
-#cgp.draw()
+# gradient = v.backward()
 
-(G, mapping) = z._getCleanComputationGraph(human_readable=True)
+# print("gradx=", x.grad)
+# print("grady=", y.grad)
+# print("grady=", z.grad)
+# print("gradient=", gradient)
 
-for (node_id, data) in G.nodes(data=True):
-    if ("type" in data) and data["type"]=="function":
-        print("d=", data)
+cgp = ComputationGraphProcessor(v, human_readable=False)
+cgp.draw(display_nodes_value=True)
 
-        v = FunctionRef.get(data["func_name"])()._compute(data["input_value"], *data["func_argv"], **dict(data["func_kwargs"]))
-        dv = FunctionRef.get(data["func_name"])()._derivative(data["input_value"], *data["func_argv"], **dict(data["func_kwargs"]))
-        print("v=", v, "dv=", dv)
+# (G, mapping) = z._getCleanComputationGraph(human_readable=True)
+
+# for (node_id, data) in G.nodes(data=True):
+#     if ("type" in data) and data["type"]=="function":
+#         print("d=", data)
+
+#         v = FunctionRef.get(data["func_name"])()._compute(data["input_value"], *data["func_argv"], **dict(data["func_kwargs"]))
+#         dv = FunctionRef.get(data["func_name"])()._derivative(data["input_value"], *data["func_argv"], **dict(data["func_kwargs"]))
+#         print("v=", v, "dv=", dv)
 
 # import networkx as nx
 # G = nx.MultiDiGraph()
