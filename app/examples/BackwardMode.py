@@ -27,22 +27,23 @@ from MathLib.FunctionReferences import FunctionRef
 x = Vector(14.23, requires_grad=True, label="x")
 y = Vector(8, requires_grad=True, label="y")
 z = Vector(6.96, requires_grad=True, label="z")
-#z = log(x, base=14) + x*y + y*sin(y) + x*y
+# #z = log(x, base=14) + x*y + y*sin(y) + x*y
 
-d = y+x+3
-v = x+y + z
+d = (x+y)*x+y
+g = y*3
+v = y/sin(z)
 
 print("z=", v)
 
-# gradient = v.backward()
+gradient = v.backward()
 
-# print("gradx=", x.grad)
-# print("grady=", y.grad)
-# print("grady=", z.grad)
-# print("gradient=", gradient)
+print("gradx=", x.grad)
+print("grady=", y.grad)
+print("gradz=", z.grad)
+print("gradient=", gradient)
 
 cgp = ComputationGraphProcessor(v, human_readable=False)
-cgp.draw(display_nodes_value=True)
+#cgp.draw(display_nodes_value=True)
 
 # (G, mapping) = z._getCleanComputationGraph(human_readable=True)
 
@@ -60,14 +61,19 @@ cgp.draw(display_nodes_value=True)
 # G.add_node("A", label="oki")
 # G.add_node("B")
 # G.add_node("C")
+# G.add_node("D")
 
 # G.add_edge("A", "B", type="operation", operator="+")
-# G.add_edge("A", "B", type="operation", operator="-")
-# G.add_edge("A", "B", type="operation", operator="+")
+# G.add_edge("B", "C", type="operation", operator="-")
+# G.add_edge("C", "A", type="operation", operator="+")
 
-# G.add_edge("A", "C", type="operation", operator="+")
+# G.add_edge("B", "D", type="operation", operator="+")
 
-# G.add_edge("A", "C", type="function", func_name="sin")
+# G.add_edge("D", "A", type="function", func_name="sin")
+
+# J = nx.simple_cycles(G)
+# for j in J:
+#     print(j)
 
 # H = nx.MultiDiGraph()
 # H.add_node("A")

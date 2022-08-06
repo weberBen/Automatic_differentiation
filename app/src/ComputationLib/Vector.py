@@ -241,45 +241,61 @@ class Vector:
     def _getCleanComputationGraph(self, human_readable=False):
         G = nx.DiGraph()
 
-        unused_nodes = {}
-        for (node, data) in self.computation_graph.nodes(data=True):
+        
+        for (node_id, data) in self.computation_graph.nodes(data=True):
             if ("type" in data) and (data["type"]=="functionnal"):
                 continue
             
-            try:
-                next(self.computation_graph.successors(node))
-            except StopIteration: # node has no output/child (then unused node)
-
-                if node!=self.id:
-                    
-                    _nodes_to_remove = [node]
-
-                    # need to find simple circle nx.simple_circle(G)
-
-                    while len(_nodes_to_remove)>0:
-                        _node = _nodes_to_remove.pop(0)
-
-                        for _node_id in self.computation_graph.predecessors(_node):
-
-                            pass
-
-                        unused_nodes[_node] = True
-
-                    continue
-
-            if node in unused_nodes:
-                continue
-            
-            G.add_node(node, **data)
+            G.add_node(node_id, **data)
         
         for (node_from, node_to, data) in self.computation_graph.edges(data=True):
             if "type" in data :
                 continue
-            
-            if (node_to in unused_nodes):
-                continue
 
             G.add_edge(node_from, node_to, **data)
+        
+        ##### remove unused node
+        unused_nodes = {}
+        for node_id in G.nodes():
+            if node_id in unused_nodes:
+                continue
+            try:
+                next(G.successors(node_id))
+            except StopIteration: # node has no output/child (then unused node)
+
+                if node_id!=self.id:
+                    unused_nodes[node_id] = True
+
+                    nodes_to_proceed = [node_id]
+
+                    while len(nodes_to_proceed)>0:
+                        _node_id = nodes_to_proceed.pop(0)
+
+                        for pred_node_id in G.predecessors(_node_id):
+                            
+                            count_used = 0
+                            count_unused = 0
+                            for succ_node_id in G.successors(pred_node_id):
+
+                                if succ_node_id in unused_nodes:
+                                    count_unused+=1
+                                else:
+                                    count_used+=1
+                            
+                            if (count_unused+count_used)==count_unused:
+                                
+                                unused_nodes[pred_node_id] = True
+                                nodes_to_proceed.append(pred_node_id)
+        
+        
+        for (node_from, node_to) in list(G.edges()):  
+            if (node_to in unused_nodes):
+                G.remove_edge(node_from, node_to)
+
+        for (node_id, val) in unused_nodes.items():
+            G.remove_node(node_id)
+        
+        #####
 
         mapping = None
         if human_readable:
@@ -301,6 +317,8 @@ class Vector:
         is_computable = True
 
         for child_node_id in computation_graph.successors(parent_node_id):
+
+            parent_node = computation_graph.nodes[parent_node_id]
 
             # A parent node could be not computable at that time because we did not processed one of its child
             # because that child is deeper in the graph
@@ -368,7 +386,7 @@ class Vector:
                     elif operator=="*":
                         
                         if is_self_operation: # x^2, dv=2*x
-                            _dv = 2*_node["value"]
+                            _dv = 2*parent_node["value"]
                         else: # x*y or y*x, dv=y
                             _dv = _other_node["value"]
                     elif operator=="-":
@@ -386,7 +404,7 @@ class Vector:
                             if _node_operation_position=="left":
                                 _dv = 1/_other_node["value"]
                             else:
-                                _dv = -1*_other_node["value"]/(_node["value"]**2)
+                                _dv = -1*_other_node["value"]/(parent_node["value"]**2)
                     else:
                         msg = "invalid operator '{0}'".format(operator)
                         raise Exception(msg)
