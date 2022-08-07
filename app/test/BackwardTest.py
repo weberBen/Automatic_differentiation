@@ -132,7 +132,7 @@ class BackwardTest(unittest.TestCase, IsCloseAssertion):
             dv_ref = sym.diff(f, v).subs({v: x}).evalf()
             dv = Cos()._derivative(x)
             
-            # check if isClose instead of equals because of symPy floating precision that does not match math lib precision
+            # check if isClose instead of equals because of symPy floating precision that does not match the math lib precision
             self.assertIsClose(dv_ref, dv, msg="x={0}".format(x))
 
     def test_tan(self):
@@ -152,7 +152,6 @@ class BackwardTest(unittest.TestCase, IsCloseAssertion):
             dv_ref = sym.diff(f, v).subs({v: x}).evalf()
             dv = Tan()._derivative(x)
             
-            # check if isClose instead of equals because of symPy floating precision that does not match math lib precision
             self.assertIsClose(dv_ref, dv, "x={0}".format(x))
 
     def test_exp(self):
@@ -172,7 +171,6 @@ class BackwardTest(unittest.TestCase, IsCloseAssertion):
             dv_ref = sym.diff(f, v).subs({v: x}).evalf()
             dv = Exp()._derivative(x)
             
-            # check if isClose instead of equals because of symPy floating precision that does not match math lib precision
             self.assertIsClose(dv_ref, dv, "x={0}".format(x))
     
     def test_log(self):
@@ -194,7 +192,6 @@ class BackwardTest(unittest.TestCase, IsCloseAssertion):
                 dv_ref = sym.diff(f, v).subs({v: x}).evalf()
                 dv = Log()._derivative(x, base)
                 
-                # check if isClose instead of equals because of symPy floating precision that does not match math lib precision
                 self.assertIsClose(dv_ref, dv, "x: {0}  |  base: {1}".format(x, base))
     
     def test_grad1(self):

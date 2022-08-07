@@ -8,12 +8,10 @@ from .Vector import Vector
 class ComputationGraphProcessor:
     def __init__(self, end_vector: Vector, human_readable=True):
         """
-        init function
-
         Parameters
         ----------
             end_vector : Vector
-                vector to perfom action on
+                vector to perform actions on
             human_readable: boolean (optionnal)
                 rename each node id to integer starting from 0
         """

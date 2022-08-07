@@ -35,7 +35,7 @@ def _findOperation(computation_graph, operator: str, left, right):
 
 def _addOperation(operator: str, left, right, output):
     """
-        Register an operation (+,-, ...) to the computation graph
+        Register an operation (+,-, ...) into the computation graph
 
         Parameters
         ----------
@@ -53,11 +53,11 @@ def _addOperation(operator: str, left, right, output):
         msg = "Invalid operator '" + str(operator) + "'"
         raise Exception(msg)
 
-    # The computation need to be shared by all the vectors that has been implied into an operation
+    # The computation need to be shared by all the vectors that has been involved into an operation
     # For example : 
     #   z = (x+y) + sin(x+y) - 3
-    # The operation (x+y) must correspond to an unique node inside the computation graph and not a node for (x+y) and for the sinus of (x+y)
-    # In other words we need to have :
+    # The operation (x+y) must correspond to a unique node inside the computation graph and not one node for (x+y) and another the sinus of (x+y)
+    # In other words, we need to have :
     #
     #   (x)---->|-->|---> (+) --->|---> (sin)--->|
     #               |             |              |
@@ -79,15 +79,15 @@ def _addOperation(operator: str, left, right, output):
     #                                                                                                                    |
     #   (3)------------------------------------------------------------------------------------------------------------->|
     #
-    # But in fact the Interpreter of a langage generally make the calculation of the inner object of a function and then the rest
+    # But in fact the interpreter of a language generally makes the calculation of the inner object of a function and then the rest
     # It means that the (x+y) inside the sinus function will be computed first and if the computation graph of y is not updated for each operation/function
     # Then by the time the interpreter will go to the first (x+y) the computation graph of y will be blank and it will recreate another node
     # To sync the computation graph for each operation we make sure that the computation graph of each member (left and right) reference the same 
     # (not a copy but the same object)
-    # All vector that has been related in a operation share the same computation graph object
-    # When an operation occurs we start to merge the computation graph of the two members and then erase the old computations graph to the same reference
-    # In particular, at the begining when two variable are related in an operation their nearly empty computation graph will be replace by the same object as
-    # reference, then later when one of that variable will be implied in another operation the computation graph of that variable will be immediatly sync since
+    # All vector that has been related in an operation share the same computation graph object
+    # When an operation occurs we start to merge the computation graph of the two members and then erase the old computation graphs to have the same reference
+    # In particular, at the beginning when two variables are related in an operation their nearly empty computation graph will be replaced by the same object as
+    # reference, then later when one of that variable will be involved in another operation the computation graph of that variable will be immediately synced since
     # it's the same object
     # For example :
     #   x,y variable
@@ -101,7 +101,7 @@ def _addOperation(operator: str, left, right, output):
     # After b the computation graph of j will be the one from x,y,d,z and now b
     #
     # We do not register constants, but we could. In other words the operation (x+y)*3 + (x+y)*3 will create a unique node for (x+y) but not for (x+y)*3
-    # Two other nodes that represent the operator multiplication will be created involving the node (x+y) and two new nodes fo the constant 3
+    # Two other nodes that represent the operator multiplication will be created involving the node (x+y) and two new nodes for the constant 3
     #
     #   (x)-------->|
     #               |----->|-----> (+)---->|---------->|
@@ -115,26 +115,26 @@ def _addOperation(operator: str, left, right, output):
     #
 
     if left.computation_graph is not right.computation_graph:
-        # If the two objects are the same then adding nodes, edges to left will change the size of the graph of the righ
-        # That will produce iteration on changing size list
+        # If the two objects are the same then adding nodes and edges to the left graph will change the size of the rigth graph
+        # That will produce an error (iteration on variable size list)
         left.computation_graph.add_edges_from(right.computation_graph.edges(data=True))
         left.computation_graph.add_nodes_from(right.computation_graph.nodes(data=True))
 
-    # for ease of use (could be computation graph of the rigth)
+    # for ease of use (could be the computation graph of the rigth node)
     computation_graph = left.computation_graph
 
     node_id = _findOperation(computation_graph, operator, left, right)
     if node_id is not None:
         # The operation already exists in the computation graph
-        # Then we set the id out the output vector to the one register inside the computation graph (since it need
-        # to represents the same vector)
+        # Then we set the id out the output vector to the one register inside the computation graph (since it needs
+        # to represent the same vector)
         output.id = node_id
 
         if right.computation_graph is not left.computation_graph:
             right.computation_graph.add_edges_from(computation_graph.edges(data=True))
             right.computation_graph.add_nodes_from(computation_graph.nodes(data=True))
 
-        # sync the computation graph of the ouput vector
+        # sync the computation graph of the output vector
         output.computation_graph = computation_graph
 
         return
@@ -146,7 +146,7 @@ def _addOperation(operator: str, left, right, output):
     computation_graph.add_edge(left.id, output.id, operator_relative_position="left")
 
     if right.id!=left.id:
-        # reflective operation (x+x, x*x, x/x) will produce two identique edge that we need to avoid
+        # reflective operations (x+x, x*x, x/x) will produce two identical edges that we need to avoid
 
         # right edge of the operation
         computation_graph.add_edge(right.id, output.id, operator_relative_position="right")
@@ -209,17 +209,17 @@ def _initComputationGraph(computation_graph, node, value):
 
         Parameters
         ----------
-            computation_graph : netwrokx
+            computation_graph : networkX
                 empty graph
             node : Vector instance
 
             value : int/float
                 value of the vector
     """
-    # Vector can either be a variable or a constant
+
     if node.requires_grad:
         computation_graph.add_node(node.id, value=value, type="variable", name=node.label, ref=node) 
-        # ref is used to access the node later to set the gradient attriobute for that variable
+        # ref is used to access the node later to set the gradient attribute for that variable
     else:
         computation_graph.add_node(node.id, value=value, type="constant")
 
@@ -227,7 +227,7 @@ def _initComputationGraph(computation_graph, node, value):
 
 class Vector:
     """
-        Tensor implementation that deal with autograd
+        Tensor implementation that deals with autograd
     """
 
     def __init__(self, value, requires_grad=False, label=None, _id=None, _computation_graph=None, _init_computation_graph=True):
@@ -237,7 +237,7 @@ class Vector:
             value : int/float
                 value of the vector
             requires_grad : boolean (optionnal)
-                true if the current vector need to be handled as a variable, else false
+                true if the current vector needs to be handled as a variable, else false
             label : boolean (optionnal)
                 indicates if we need to display that label for the corresponding node in the computation graph when plotting it
                 (purely aesthetic option)
@@ -247,9 +247,9 @@ class Vector:
             _id : string (optionnal)
                 id of the vector that is used by the computation graph to keep track of the operation
             _computation_graph : networkx graph (optionnal)
-                use to set the computation graph of the new vector created by operation (+,-, sin, cos, ...)
+                use to set the computation graph of the new vector created by an operation (+,-, sin, cos, ...)
             _init_computation_graph: boolean (optionnal)
-                initiliazed of not the computation graph. Parameters ignored if the vector requires autograd
+                initialize of not the computation graph. Parameters ignored if the vector requires autograd
         """
 
         _init_computation_graph = _init_computation_graph if not requires_grad else True
@@ -262,7 +262,7 @@ class Vector:
         if not _init_computation_graph:
             self.computation_graph = None
         else:
-            # Each vector starts with an empty graph that will hold all operations the vector is being implied into
+            # Each vector starts with an empty graph that will hold all operations the vector is being involved into
             self.computation_graph = _computation_graph if _computation_graph is not None else nx.MultiDiGraph()
 
             # The computation graph is multi edges directed graph
@@ -275,14 +275,14 @@ class Vector:
             #
             # But also an edge between (x) and (y) that will hold the information that there is an addition between (x) and (y)
             # That edge will be later removed when the computation graph will be fully created
-            # Since there could be multiple operation/function between to objects we need a graph with multiple edges
-            # Denotes that the edges that will remain in the final computation graph like (x, +) and (y, +) are unique (there could not be multplie edges
+            # Since there could be multiple operation/function between two objects we need a graph with multiple edges
+            # Note that the edges that will remain in the final computation graph like (x, +) and (y, +) are unique (there could not be multiple edges
             # between the nodes (x) and  (+), since a node is either a variable, constant, an operator (that takes only two nodes as input), or function
             # (that takes one node as input))
             # Here the node (+) is just for presentation purposes but in the real computation graph the id of a node is not the operator itself
             # `(random_id) = +` is a more correct representation for that node. In other words, there is not a unique node for each addition operation
             # 
-            # The finaly computation graph is directed graph with single edge between two nodes
+            # The final computation graph is a directed graph with single edge between two nodes
         
         self.requires_grad = requires_grad
 
@@ -301,14 +301,14 @@ class Vector:
 
     def __operation__(self, operator, v):
         """
-        Compute operation (+,-, ...) for the vector
+        Compute operations (+,-, ...) for the vector
 
         Parameters
         ----------
             operator : string
                 name of the operation
             v : object
-                Object that is implied into the operation (ie: current_vector operator v)
+                Object that is involved in the operation (ie: current_vector operator v)
         """
         if type(v)==int or type(v)==float:
             v = Vector(v)
@@ -329,7 +329,7 @@ class Vector:
                 raise Exception(msg)
             
             output = Vector(value, _init_computation_graph=False)
-            # computation graph of the output will be erease at the end of the operation to share the one from left and right member of the operation
+            # computation graph of the output will be erased at the end of the operation to share the one from left and right member of the operation
 
             # register the operation in the computation graph
             _addOperation(operator, self, v, output)
@@ -359,7 +359,7 @@ class Vector:
             func_name : string
                 name of the function (unique)
             computation_function : function
-                Function that handle the computation on real value (int/float)
+                Function that handles the computation on real value (int/float)
             argv : tuples
                 unnamed parameters of the computation_function function
             kwargs: dict
@@ -401,12 +401,12 @@ class Vector:
     
     def _getCleanComputationGraph(self, human_readable=False):
         """
-        Remove edges and nodes use to built the computation graph among the final edges and nodes that are needed
+        Remove edges and nodes used to build the computation graph among the final edges and nodes that are needed
 
         Parameters
         ----------
             human_readable : boolean (optionnal)
-                convert the id to interger that start to 0
+                convert the id to an integer starting from 0
         
         Return
         ----------
@@ -436,10 +436,10 @@ class Vector:
 
             G.add_edge(node_from, node_to, **data)
         
-        ##### remove unused node
+        ##### remove unused nodes
 
-        # An unsed node is a node that as no outputs/no sucessors (the current node where the gradient will be computed is excluded)
-        # An unsed node appears when a variable is part of a calculation that is not reused by the final vector where the gradient is being computed
+        # An unused node is a node that as no outputs/no successors (the current node where the gradient will be computed is excluded)
+        # An unused node appears when a variable is part of a calculation that is not reused by the final vector where the gradient is being computed
         # For example :
         #   x, y, z vector variables
         #   d = x+y
@@ -447,7 +447,7 @@ class Vector:
         #   g = y + z + p
         #   gradient of g
         #
-        # Here the node built from d (with x+y) is unused because not reused in the final object g where the gradient need to be computed
+        # Here the node built from d (with x+y) is unused because not reused in the final object g where the gradient needs to be computed
         # But, since the computation graph is shared across all variables, at g the operation (x+y) will already be registered in the computation graph of y
         # Then it will be part of the computation graph of g
         # To ease the computation it's better to remove theses nodes
@@ -465,8 +465,8 @@ class Vector:
 
                     nodes_to_proceed = [node_id]
 
-                    # We need to track back all the nodes related to an unsued node
-                    # because removing a node could reveal other unused ndoes
+                    # We need to track back all the nodes related to an unusued node
+                    # because removing a node could reveal other unused nodes
                     while len(nodes_to_proceed)>0:
                         _node_id = nodes_to_proceed.pop(0)
 
@@ -487,7 +487,7 @@ class Vector:
                                 nodes_to_proceed.append(pred_node_id)
         
         
-        # start to removing the unused edges produced by the identification of the unused nodes
+        # start to remove the unused edges produced by the identification of the unused nodes
         for (node_from, node_to) in list(G.edges()):  
             if (node_to in unused_nodes):
                 G.remove_edge(node_from, node_to)
@@ -515,8 +515,8 @@ class Vector:
     def backward(self):
         (computation_graph, ids_mapping) = self._getCleanComputationGraph(human_readable=False)
         
-        # This list will hold a serie of nodes id that satisfay the dependencies of each node to allow the computation
-        # This is not necessary the shortest path to resolve the problem
+        # This list will hold a serie of node ids that satisfies the dependencies of each node to allow the computation
+        # This is not necessarily the shortest path to resolve the problem
         nodes_to_process = [self.id] 
 
         nodes_dv = {}
@@ -546,15 +546,15 @@ class Vector:
             #  parent_node_2 --------->| ...
             # 
             # From the current node, we want to compute the derivative of the parent node, the predecessors
-            # For that we need to get all the output relationships into which a parent node is implied, we need
-            # to get the children of the parent node. One of thta children is the current node but a parent node could
+            # For that we need to get all the output relationships into which a parent node is involved, we need
+            # to get the children of the parent node. One of that children is the current node but a parent node could
             # have more than one output (so the current node could not the only child of that parent node) 
             
-            for parent_node_id in computation_graph.predecessors(current_node_id): # avoid using list that will load all nodes in memory, instead use cursor
+            for parent_node_id in computation_graph.predecessors(current_node_id): # avoid using a list that will load all nodes in memory, instead use the cursor
 
                 parent_node = computation_graph.nodes[parent_node_id]
 
-                if ("type" in parent_node) and (parent_node["type"]=="constant"): # else will use the chain rules to compute derivative as if it was a variable
+                if ("type" in parent_node) and (parent_node["type"]=="constant"): # else will use the chain rules to compute the derivative as if it was a variable
                     continue
                 
                 ##### compute the derivative value of the parent node with all its children derivatives value if already computed
@@ -565,7 +565,7 @@ class Vector:
 
                     parent_node = computation_graph.nodes[parent_node_id]
 
-                    # A parent node could be not computable at that time because we did not processed one of its child
+                    # A parent node could be not computabled at that time because we have not processed one of its children
                     # because that child is deeper in the graph
 
                     if child_node_id not in nodes_dv:
@@ -694,8 +694,8 @@ class Vector:
                 if is_computable and (parent_node_id not in nodes_visited):
                     # The parent node will act as a child for other nodes with a complete derivative value computed
                     # Then we can check if the derivatives of its predecessors can be computed (as that parent node which will be a child
-                    # node for its predecessors has a derivative value). Else when the parent node will be proceeded we will had the needed children nodes
-                    # to the list
+                    # node for its predecessors has a derivative value). Else when the parent node will be proceeded we add to the list 
+                    # all the needed children to compute the derivative
                     nodes_to_process.append(parent_node_id)
                     nodes_visited[parent_node_id] = True
 

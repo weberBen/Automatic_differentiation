@@ -10,7 +10,7 @@ class DualNumber:
             return DualNumber(self.primal+v.primal, self.tangent+v.tangent)
         else: # scalar addition
             # In fact we should have checked the type of the input object for int/float
-            # but other operation with specific object could be defined and allow them avoid having to rewrite that class exception
+            # but other operation with specific object could be defined and allow them to avoid having to rewrite that class exception
             return DualNumber(self.primal+v, self.tangent)
     
     def __mul__(self, v):
@@ -50,7 +50,7 @@ class DualNumber:
         return DualNumber(self.primal-v, self.tangent)
     
     def __rtruediv__(self, v):
-        # denominator divison : scalar / current_object
+        # denominator diviison : scalar / current_object
 
         # Since the division gives tricky expansion we just forward that case to
         # the previous division definition for numerator dual number

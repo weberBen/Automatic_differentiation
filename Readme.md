@@ -1,7 +1,8 @@
 # Automatic differentiation
 
-Implementation of a simple automatic differientiation (forward mode with dual number and backward mode with networkx) for educationnal purpose.
-The mathematical background of the forward and backward modes are explained in details [here]()
+Implementation of a simple automatic differentiation (forward mode with [dual number](https://en.wikipedia.org/wiki/Dual_number) and backward mode with [NetworkX](https://networkx.org/documentation/stable/tutorial.html)) with mathematical explanations.
+
+*The mathematical background of the forward and backward modes is explained in details [here]()*
 
 
 ### Forward mode
@@ -105,9 +106,9 @@ cgp.draw(display_nodes_value=True)
     />
 </p>
 
-Self reflective operations (x*x, x/x, x+x, x-x, ...) are represented as a single edge in the graph
+Self reflective operations (x*x, x/x, x+x, x-x, ...) are represented as a single edge in the graph.
 
-You can set the `label` option when defining new `Vector` to render the variable name during the graph drawing (i.e: `x = Vector(14.23, requires_grad=True, label="x")`)
+You can set the `label` option when defining new `Vector` to render the variable name during the graph drawing (i.e: `x = Vector(14.23, requires_grad=True, label="x")`).
 
 
 See more examples [here](./app/examples/BackwardMode.py)
@@ -142,11 +143,11 @@ Then :
 mycos(4)
 ```
 
-The `compute` method is used for the forward mode and for computing the value of the function when evaluting it. The `derivative` is for the backward mode.
+The `compute` method is used for the forward mode and for computing the value of the function when evaluating it. The `derivative` is for the backward mode.
 
-## Extension of the lib
+## Extending the lib
 
-The lib currently accepts only scalar function but by using `numpy` for each standars functions we can evalute scalar field functions : 
+The lib currently accepts only scalar functions, but by using `numpy` for each standars functions we can evaluate scalar field functions : 
 
 ```Python
 import numpy as np
