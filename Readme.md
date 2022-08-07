@@ -4,8 +4,14 @@ Implementation of a simple automatic differentiation (forward mode with [dual nu
 
 **The mathematical background of the forward and backward modes is explained in details [here]()**
 
+## Installation
 
-### Forward mode
+```bash
+cd app
+pip install -r requirements.txt
+```
+
+## Forward mode
 
 Import packages :
 ```Python
