@@ -72,7 +72,7 @@ class ComputationGraphProcessor:
             return node_id
         return self.graph_mapping[node_id]
     
-    def draw(self, layout=False, width="100%", height="100%", display_nodes_value=False):
+    def draw(self, layout=False, width="100%", height="100%", display_nodes_value=False, filename='nx.html'):
         """
         Draw computation graph
 
@@ -86,6 +86,8 @@ class ComputationGraphProcessor:
                 pyvis height option
             display_nodes_value: boolean (optionnal)
                 display computed value of each node in the computation graph
+            filename: string (boolean)
+                file to write the html (pyvis) drawing of the graph
         """
         G = self.computation_graph
 
@@ -115,7 +117,7 @@ class ComputationGraphProcessor:
         nt.add_node("output", label="output", group="output", title=f'id({root_node_id})')
         nt.add_edge(root_node_id, "output", physics=True, title="output")
 
-        nt.show('nx.html')
+        nt.show(filename)
 
     def rebuildExpression(self, track_origin=False):
 

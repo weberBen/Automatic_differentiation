@@ -476,12 +476,12 @@ class Vector:
                             count_unused = 0
                             for succ_node_id in G.successors(pred_node_id):
 
-                                if succ_node_id in unused_nodes:
+                                if (succ_node_id in unused_nodes) and (succ_node_id!=self.id):
                                     count_unused+=1
                                 else:
                                     count_used+=1
                             
-                            if (count_unused+count_used)==count_unused:
+                            if ((count_unused+count_used)==count_unused) and (pred_node_id!=self.id):
                                 
                                 unused_nodes[pred_node_id] = True
                                 nodes_to_proceed.append(pred_node_id)
@@ -512,7 +512,21 @@ class Vector:
         return (G, mapping)
 
     
-    def backward(self):
+    def backward(self, _human_readable=False):
+        """
+        Compute the gradient with the backward mode
+
+        Parameters
+        ----------
+            _human_readable : boolean (optionnal)
+                convert the id to an integer starting from 0
+                Has no impact on the computation, just for ease of use when debugging and inspecting the gradient of each node with the chain rule
+        
+        Return
+        ----------
+            All the node derivatives computed by the chain rule (only for debugging)
+        """
+
         (computation_graph, ids_mapping) = self._getCleanComputationGraph(human_readable=False)
         
         # This list will hold a serie of node ids that satisfies the dependencies of each node to allow the computation
@@ -699,6 +713,18 @@ class Vector:
                     nodes_to_process.append(parent_node_id)
                     nodes_visited[parent_node_id] = True
 
+
+        if _human_readable:
+            (computation_graph, ids_mapping) = self._getCleanComputationGraph(human_readable=True)
+            # Since the graph has not changed between the start of that function and the end, the mapping
+            # is the same as if we could have done it at the beginning (but to simplify the code and since it's only
+            # for debugging we do that at the end)
+
+            output = {}
+            for (node_id, value) in nodes_dv.items():
+                output[ids_mapping[node_id]] = value
+            
+            return output
         
         return nodes_dv
 

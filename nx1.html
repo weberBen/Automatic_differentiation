@@ -50,8 +50,8 @@
         
 
         // parsing and collecting nodes and edges from the python
-        nodes = new vis.DataSet([{"font": "15px", "group": "variable", "id": 1, "label": "var(x)=14.23", "shape": "dot", "title": "id(1)"}, {"font": "15px", "group": "function", "id": 2, "label": "Sin", "shape": "dot", "title": "id(2)"}, {"font": "25px", "group": "operator", "id": 0, "label": "+", "shape": "dot", "title": "id(0)"}, {"group": "output", "id": "output", "label": "output", "shape": "dot", "title": "id(0)"}]);
-        edges = new vis.DataSet([{"arrows": "to", "from": 1, "physics": true, "title": null, "to": 2}, {"arrows": "to", "from": 1, "physics": true, "title": "right", "to": 0}, {"arrows": "to", "from": 2, "physics": true, "title": "left", "to": 0}, {"arrows": "to", "from": 0, "physics": true, "title": "output", "to": "output"}]);
+        nodes = new vis.DataSet([{"font": "15px", "group": "variable", "id": 0, "label": "var(var_0)=2", "shape": "dot", "title": "id(0)\n            value(2)\n            "}, {"font": "15px", "group": "variable", "id": 2, "label": "var(var_2)=3", "shape": "dot", "title": "id(2)\n            value(3)\n            "}, {"font": "15px", "group": "function", "id": 1, "label": "Sin", "shape": "dot", "title": "id(1)\n            value(0.1411200080598672)\n            "}, {"font": "25px", "group": "operator", "id": 3, "label": "+", "shape": "dot", "title": "id(3)\n            value(2.1411200080598674)\n            "}, {"group": "output", "id": "output", "label": "output", "shape": "dot", "title": "id(3)"}]);
+        edges = new vis.DataSet([{"arrows": "to", "from": 0, "physics": true, "title": "left", "to": 3}, {"arrows": "to", "from": 2, "physics": true, "title": null, "to": 1}, {"arrows": "to", "from": 1, "physics": true, "title": "right", "to": 3}, {"arrows": "to", "from": 3, "physics": true, "title": "output", "to": "output"}]);
 
         // adding nodes and edges to the graph
         data = {nodes: nodes, edges: edges};
