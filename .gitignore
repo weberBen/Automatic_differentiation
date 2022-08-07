@@ -2,3 +2,4 @@ Sources/
 temp/
 *.pyc
 *.html
+app/venv/
