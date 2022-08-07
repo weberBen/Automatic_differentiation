@@ -7,11 +7,22 @@ from .Vector import Vector
 
 class ComputationGraphProcessor:
     def __init__(self, end_vector: Vector, human_readable=True):
+        """
+        init function
+
+        Parameters
+        ----------
+            end_vector : Vector
+                vector to perfom action on
+            human_readable: boolean (optionnal)
+                rename each node id to integer starting from 0
+        """
+
         self.end_vector = end_vector
         (self.computation_graph, self.graph_mapping) = self.end_vector._getCleanComputationGraph(human_readable=human_readable)
     
     @staticmethod
-    def getVariableNodeName(node_id, data, prefix=None):
+    def _getVariableNodeName(node_id, data, prefix=None):
 
         prefix_named_var = None
         prefx_unnamed_var = None
@@ -27,7 +38,7 @@ class ComputationGraphProcessor:
             return str((prefx_unnamed_var if prefx_unnamed_var else "") + str(node_id))
 
     @staticmethod
-    def formatNodeLabel(node_id, data):
+    def _formatNodeLabel(node_id, data):
         if "type" not in data:
             if "value" in data:
                 return str(data["value"])
@@ -40,7 +51,7 @@ class ComputationGraphProcessor:
             return f'const({data["value"]})'
         
         if data["type"]=="variable":
-            var_name = ComputationGraphProcessor.getVariableNodeName(node_id, data, ("", "var_"))
+            var_name = ComputationGraphProcessor._getVariableNodeName(node_id, data, ("", "var_"))
             return f'var({var_name})={data["value"]}'
         
         if data["type"]=="function":
@@ -49,7 +60,7 @@ class ComputationGraphProcessor:
         return str(data["type"])
     
     @staticmethod
-    def formatNodeTitle(node_id, data, display_nodes_value):
+    def _formatNodeTitle(node_id, data, display_nodes_value):
         title = f'id({node_id})'
         if display_nodes_value and ("value" in data):
             title =  title + '''
@@ -58,12 +69,26 @@ class ComputationGraphProcessor:
         
         return title
 
-    def getLocalNodeId(self, node_id):
+    def _getLocalNodeId(self, node_id):
         if self.graph_mapping is None:
             return node_id
         return self.graph_mapping[node_id]
     
     def draw(self, layout=False, width="100%", height="100%", display_nodes_value=False):
+        """
+        Draw computation graph
+
+        Parameters
+        ----------
+            layout : boolean (optionnal)
+                pyvis layout option
+            width: string (optionnal)
+                pyvis width option
+            height: string (optionnal)
+                pyvis height option
+            display_nodes_value: boolean (optionnal)
+                display computed value of each node in the computation graph
+        """
         G = self.computation_graph
 
         nt = Network(width, height, directed=True, layout=layout)
@@ -73,8 +98,8 @@ class ComputationGraphProcessor:
             if ("type" in data) and (data["type"]=="operator"):
                 font_size = "25"
             
-            label = ComputationGraphProcessor.formatNodeLabel(node_id, data)
-            title = ComputationGraphProcessor.formatNodeTitle(node_id, data, display_nodes_value)
+            label = ComputationGraphProcessor._formatNodeLabel(node_id, data)
+            title = ComputationGraphProcessor._formatNodeTitle(node_id, data, display_nodes_value)
             
             nt.add_node(node_id, label=label, group=data["type"], title=title, font=f'{font_size}px')
         
@@ -87,7 +112,7 @@ class ComputationGraphProcessor:
             nt.add_edge(node_from_id, node_to_id, physics=True, title=label)
         
 
-        root_node_id = self.getLocalNodeId(self.end_vector.id)
+        root_node_id = self._getLocalNodeId(self.end_vector.id)
 
         nt.add_node("output", label="output", group="output", title=f'id({root_node_id})')
         nt.add_edge(root_node_id, "output", physics=True, title="output")
@@ -99,7 +124,7 @@ class ComputationGraphProcessor:
         computation_graph = self.computation_graph
 
         leafs = []
-        root_node_id = self.getLocalNodeId(self.end_vector.id)
+        root_node_id = self._getLocalNodeId(self.end_vector.id)
         graph_root = None # graph root could be different from the end vector we want to evaluate the expression
         var_count = 0
         nodes_eval = {}
@@ -112,7 +137,7 @@ class ComputationGraphProcessor:
                     if data["type"]=="variable":
                         leafs.append(node_id)
 
-                        var_name = ComputationGraphProcessor.getVariableNodeName(node_id, data, ("", "var_"))
+                        var_name = ComputationGraphProcessor._getVariableNodeName(node_id, data, ("", "var_"))
                         nodes_eval[node_id] = var_name
 
                         var_count += 1

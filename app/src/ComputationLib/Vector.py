@@ -412,6 +412,7 @@ class Vector:
         ----------
             computation_graph :  networkx graph
                 Computation graph reduces to only the nodes and edges needed for gradient computation
+                (the return object is detached (a copy) from the initial computation graph of the vector)
             mapping : dict/None
                 if human_readable is false then return None
                 Else return the mapping between the initial node ids and the human readable ids that are used by the computation graph
