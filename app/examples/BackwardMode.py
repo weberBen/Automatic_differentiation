@@ -27,22 +27,58 @@ print("result", V)
 
 V.backward()
 
-print("grad_x", x.grad)
-print("grad_y", y.grad)
-print("grad_z", z.grad)
+adx_v = x.grad
+ady_v = y.grad
+adz_v = z.grad
 
-dx = math.cos(x.item*y.item)*y.item + y.item
-dy = math.cos(x.item*y.item)*x.item + x.item + math.log(y.item, 2) + y.item*(1/y.item)
-dz = 0
+print("grad_x", adx_v)
+print("grad_y", ady_v)
+print("grad_z", adz_v)
 
-print("----- Test -----")
-print("grad_x==dx", x.grad==dx)
-print("grad_y==dy", y.grad==dy)
-print("grad_z==dz", z.grad==dz)
+
+print("----- Manual diff -----")
+
+mdx_v = math.cos(x.item*y.item)*y.item + y.item
+mdy_v = math.cos(x.item*y.item)*x.item + x.item + (math.log(y.item, math.e)/math.log(2, math.e)) + y.item*(1/(y.item*math.log(2, math.e)))
+mdz_v = 0
+
+
+print("grad_x==mdx", adx_v==adx_v)
+print("grad_y==mdy", ady_v==mdy_v)
+print("grad_z==mdz", adz_v==mdz_v)
 
 cgp = ComputationGraphProcessor(V, human_readable=True)
-cgp.draw(display_nodes_value=True)
+#cgp.draw(display_nodes_value=True)
 
+print("----- Rebuilding expression -----")
 print("rebuilt expression from computation graph", cgp.rebuildExpression(track_origin=False))
 print("rebuilt expression from computation graph with node id", cgp.rebuildExpression(track_origin=True))
+
+
+print("----- Symbolic diff -----")
+
+import sympy as sym
+x = sym.Symbol('x')
+y = sym.Symbol('y')
+z = sym.Symbol('z')
+
+f = sym.sin(y*x) + x*y + 3 + y*sym.log(y,2)
+
+sdx = sym.diff(f, x)
+sdy = sym.diff(f, y)
+sdz = sym.diff(f, z)
+
+print("symbolic diff wrt x", sdx)
+print("symbolic diff wrt x", sdy)
+print("symbolic diff wrt x", sdz)
+
+s_v = {x:14.23, y:8, z:6.96}
+sdx_v = sdx.subs(s_v).evalf()
+sdy_v = sdy.subs(s_v).evalf()
+sdz_v = sdz.subs(s_v).evalf()
+
+
+print("grad_x==sdx", adx_v==sdx_v)
+print("grad_y==sdy", ady_v==sdy_v)
+print("grad_z==sdz", adz_v==sdz_v)
 

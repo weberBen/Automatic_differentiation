@@ -86,7 +86,7 @@ class Log(Function) :
         return math.log(input_value, base)
     
     def derivative(self, input_value, base=10):
-        return 1/(math.log(base, 2)*input_value)
+        return 1/(math.log(base, math.e)*input_value)
     
 
 log = Log().apply()
