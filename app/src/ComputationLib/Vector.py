@@ -2,7 +2,6 @@
 import networkx as nx
 import uuid
 
-from regex import R
 #%%
 
 from .Operator import OPERATORS

@@ -6,6 +6,10 @@ from .Vector import Vector
 #%%
 
 class ComputationGraphProcessor:
+    """
+        For graph computation display purposes only
+    """
+    
     def __init__(self, end_vector: Vector, human_readable=True):
         """
         Parameters
