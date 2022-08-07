@@ -147,6 +147,8 @@ The `compute` method is used for the forward mode and for computing the value of
 
 ## Extending the lib
 
+### Scalar field functions
+
 The lib currently accepts only scalar functions, but by using `numpy` for each standars functions we can evaluate scalar field functions : 
 
 ```Python
@@ -172,7 +174,7 @@ cos = NumpyCos().apply()
 
 See more examples [here](./app/examples/CustomFunctions.py)
 
-## Jacobian
+### Jacobian
 
 The computation of the [Jacobian](https://en.wikipedia.org/wiki/Jacobian_matrix_and_determinant) of a function $f: (a_1, a_2, ..., a_n) \mapsto (f_1(a_1, ..., a_n), ..., f_m(a_1, ..., a_n))$ from $R^n$ ro $R^m$ is not natively implemented but can be computed on each $f_i$ one by one :
 
