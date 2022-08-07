@@ -33,7 +33,7 @@ class DualNumber:
             dem = v.primal**2
             val = self*DualNumber(v.primal, -v.tangent)
 
-            return DualNumber(val.primal/dem, val.d/dem)
+            return DualNumber(val.primal/dem, val.tangent/dem)
         else:
             return DualNumber(self.primal/v, self.tangent/v)
 

@@ -45,3 +45,5 @@ print("-"*5)
 print("value f at ", a, "=", d_v.primal)
 print("directionnal derivative f at ", a, "for direction ", v, "=", d_v.tangent)
 
+
+#%%

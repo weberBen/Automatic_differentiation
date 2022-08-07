@@ -48,7 +48,7 @@ class Tan(Function) :
     
     def compute(self, input_value):
         if type(input_value) is DualNumber:
-            return DualNumber(math.tan(input_value.primal), - input_value.tangent/(math.cos(input_value.primal)**2))
+            return sin(input_value)/cos(input_value)
 
         return math.tan(input_value)
     
@@ -79,13 +79,13 @@ class Log(Function) :
     def __init__(self):
         super().__init__() # needed
     
-    def compute(self, input_value, base=10):
+    def compute(self, input_value, base=math.e):
         if type(input_value) is DualNumber:
-            return DualNumber(math.log(input_value.primal, base), input_value.tangent/input_value.primal)
+            return DualNumber(math.log(input_value.primal, base), input_value.tangent/(math.log(base, math.e)*input_value.primal))
         
         return math.log(input_value, base)
     
-    def derivative(self, input_value, base=10):
+    def derivative(self, input_value, base=math.e):
         return 1/(math.log(base, math.e)*input_value)
     
 

@@ -1,6 +1,7 @@
 
 
 import math
+import sympy as sym
 
 #%%
 
@@ -9,7 +10,7 @@ import __init__
 from ComputationLib.Vector import Vector
 from ComputationLib.ComputationGraph import ComputationGraphProcessor
 from MathLib.FunctionWrapper import Function
-from MathLib.Functions import Sin, sin, Log, log
+from MathLib.Functions import Sin, sin, Log, log, tan, exp, cos
 from MathLib.FunctionReferences import FunctionRef
 
 
@@ -57,7 +58,6 @@ print("rebuilt expression from computation graph with node id", cgp.rebuildExpre
 
 print("----- Symbolic diff -----")
 
-import sympy as sym
 x = sym.Symbol('x')
 y = sym.Symbol('y')
 z = sym.Symbol('z')
@@ -82,3 +82,4 @@ print("grad_x==sdx", adx_v==sdx_v)
 print("grad_y==sdy", ady_v==sdy_v)
 print("grad_z==sdz", adz_v==sdz_v)
 
+#%%
