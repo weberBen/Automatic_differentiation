@@ -149,7 +149,7 @@ The `compute` method is used for the forward mode and for computing the value of
 
 ### Scalar field functions
 
-The lib currently accepts only scalar functions, but by using `numpy` for each standars functions we can evaluate scalar field functions : 
+The lib currently accepts only scalar functions, but by using `numpy` instead of `math` lib for each functions we can now evaluate scalar field functions : 
 
 ```Python
 import numpy as np
