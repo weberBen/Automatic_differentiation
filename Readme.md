@@ -200,4 +200,4 @@ See more examples [here](./example/../app/examples/Jacobian.py)
 
 ### Thread safe
 
-Thread safe can be implemented by hardening the access to the computation graph for each vector but it's not really the purpose of that lib.
+Thread safe can be implemented by hardening the access to the computation graph for each vector and probably the uuid generation for vector id. But it's not really the purpose of that lib.
