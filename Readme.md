@@ -2,7 +2,7 @@
 
 Implementation of a simple automatic differentiation (forward mode with [dual number](https://en.wikipedia.org/wiki/Dual_number) and backward mode with [NetworkX](https://networkx.org/documentation/stable/tutorial.html)) with mathematical explanations.
 
-**The mathematical background of the forward and backward modes is explained in details [here]()**
+**The mathematical background of the forward and backward modes is explained in details [here](./Automatic_differientiation.pdf)**
 
 ## Installation
 
@@ -200,7 +200,7 @@ def computeJacobianBackward(inputs, func_res):
     return jacobian
 ```
 
-See more examples [here](./example/../app/examples/Jacobian.py)
+See more examples [here](./app/examples/Jacobian.py)
 
 ## Limitations
 
