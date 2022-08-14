@@ -2,7 +2,7 @@
 
 Implementation of a simple automatic differentiation (forward mode with [dual number](https://en.wikipedia.org/wiki/Dual_number) and backward mode with [NetworkX](https://networkx.org/documentation/stable/tutorial.html)) with mathematical explanations.
 
-**The mathematical background of the forward and backward modes is explained in details [here](./Automatic_differientiation.pdf)**
+**The mathematical backgrounds of the forward and backward modes are explained [here](./Automatic_differientiation.pdf)**
 
 ## Installation
 
@@ -114,14 +114,14 @@ cgp.draw(display_nodes_value=True)
 
 Self reflective operations ( $x^2=x*x$, $\frac{x}{x}$, $x+x$, $x-x$, ...) are represented as a single edge in the graph.
 
-You can set the `label` option when defining new `Vector` to render the variable name during the graph drawing (i.e: `x = Vector(14.23, requires_grad=True, label="x")`).
+You can set the `label` option when declaring new `Vector` to render the variable name during the graph drawing (i.e: `x = Vector(14.23, requires_grad=True, label="x")`).
 
 
 See more examples [here](./app/examples/BackwardMode.py)
 
-## Custom function
+## Custom functions
 
-You can define your own functions as following :
+You can define your own functions as follows :
 
 ```Python
 import math
@@ -149,7 +149,7 @@ Then :
 mycos(4)
 ```
 
-The `compute` method is used for the forward mode and for computing the value of the function when evaluating it. The `derivative` is for the backward mode.
+The `compute` method is used for the forward mode and for computing the value of the function when evaluating it. The `derivative` is used for the backward mode.
 
 ## Extending the lib
 
