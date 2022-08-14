@@ -98,7 +98,7 @@ dx = x.grad
 dy = y.grad
 ```
 
-You can also display the computation graph :
+You can also display the [computation graph](https://www.geeksforgeeks.org/computational-graphs-in-deep-learning/](https://www.tutorialspoint.com/python_deep_learning/python_deep_learning_computational_graphs.htm) :
 ```Python
 from ComputationLib.ComputationGraph import ComputationGraphProcessor
 
