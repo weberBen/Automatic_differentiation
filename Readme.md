@@ -3,7 +3,7 @@
 Implementation of a simple automatic differentiation (forward mode with [dual number](https://en.wikipedia.org/wiki/Dual_number) and backward mode with [NetworkX](https://networkx.org/documentation/stable/tutorial.html)) with mathematical explanations.
 
 **
- <font size="2"> 
+ <font size="10"> 
 The mathematical backgrounds of the forward and backward modes are explained [here](./Automatic_differientiation.pdf)
  </font>
 **
