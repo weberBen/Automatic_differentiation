@@ -114,7 +114,7 @@ cgp.draw(display_nodes_value=True)
     />
 </p>
 
-Self reflective operations ( $x^2=x*x$, $\frac{x}{x}$, $x+x$, $x-x$, ...) are represented as a single edge in the graph.
+Self reflective operations ( $x^2=x*x$, $\frac{x}{x}$, $x+x$, $x-x$, ... ) are represented as a single edge in the graph.
 
 You can set the `label` option when declaring new `Vector` to render the variable name during the graph drawing (i.e: `x = Vector(14.23, requires_grad=True, label="x")`).
 
@@ -184,7 +184,7 @@ See more examples [here](./app/examples/CustomFunctions.py)
 
 ### Jacobian
 
-The [Jacobian](https://en.wikipedia.org/wiki/Jacobian_matrix_and_determinant) of a function $f: (a_1, a_2, ..., a_n) \mapsto (f_1(a_1, ..., a_n), ..., f_m(a_1, ..., a_n))$ from $R^n$ ro $R^m$ is not natively implemented but can be computed on each $f_i$ one by one :
+The [Jacobian](https://en.wikipedia.org/wiki/Jacobian_matrix_and_determinant) of a function $f: (a_1, a_2, ..., a_n) \mapsto (f_1(a_1, ..., a_n), ..., f_m(a_1, ..., a_n))$ from $R^n$ to $R^m$ is not natively implemented but can be computed on each $f_i$ one by one :
 
 ```Python
 def computeJacobianBackward(inputs, func_res):
