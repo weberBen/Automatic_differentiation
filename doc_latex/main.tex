@@ -200,13 +200,15 @@ Naturally, we want to superimpose the two graphs to see the evolution of the y c
 
 Let's define :
 \begin{itemize}
-    \item[] $X := \{{ C_x(t) | t \in Ker(C_x) \cap Ker(C_y) \}} = Im(C_x)$
-    \item[] $Y := \{{ C_y(t) | t \in Ker(C_x) \cap Ker(C_y) \}} = Im(C_y)$
+    \item[] $X := \{{ C_x(t) | t \in C_x^{-1} \cap C_y^{-1} \}} = Im(C_x)$
+    \item[] $Y := \{{ C_y(t) | t \in C_x^{-1} \cap C_y^{-1} \}} = Im(C_y)$
 \end{itemize}
 
-Note that since $C_x$ and $C_y$ have the same Kernel (because they share the same time sequence) :
+where for a function $f$, $f^{-1}$ the reverse image of $f$
+
+Note that since $C_x$ and $C_y$ have the same reverse image (because they share the same time sequence) :
 $$
-Ker(C_x) \cap Ker(C_y) = Ker(C_x) = Ker(C_y)
+C_x^{-1} \cap C_y^{-1} = C_x^{-1} = C_y^{-1}
 $$
 
 Then, the corresponding composition function $C$ is :
@@ -219,7 +221,7 @@ where for $a \in X$, $f(a)=b \in Y$ with
 
 $$
 \begin{cases}
-t \in Ker(C_x) \cap Ker(C_y) \\
+t \in C_x^{-1} \cap C_y^{-1} \\
 a = C_x(t) \\
 b = C_y(t) \\
 \end{cases}
@@ -427,7 +429,7 @@ $dx$, $dy$, $dt$ are called the differential of the variable $x$, $y$, $t$. Whic
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{Derivative calculation}
+\subsection{Derivative calculation}
 
 
 But one question remains : how to derivatives are formally calculated from explicit expressions like $x + 2y$ ?
@@ -503,7 +505,7 @@ Which is by the way the first order Taylor expansion of $f$.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{Derivative computation}
+\subsection{Derivative computation}
 
 
 Now, how computers compute derivatives numerically ? As we would do with any given graph, or experimentally : take a really small step in the input set of the function and use :
@@ -548,7 +550,7 @@ There is two modes of operation for AD : forward and backward modes.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsubsection{Integration of a function}
 
-The integral of a function $f$ from $x_a \in Ker(f)$ to $x_b \in Ker(f)$, denoted $\int_{x_a}^{x_b} f(x)dx$, is by definition the area under that curve 
+The integral of a function $f$ from $x_a \in f^{-1}$ to $x_b \in f^{-1}$, denoted $\int_{x_a}^{x_b} f(x)dx$, is by definition the area under that curve 
 
 \begin{figure}[H]
  \centering
@@ -571,7 +573,7 @@ Let's take a look at a zoom of the graph of $f$ around the point $A$
 We approximate the area under $A$, $A'$ by the area of the rectangle with height $f(x_a)$. Then the area for that rectangle is : $f(x_a) \times (x_{a'} - x_a)$. We could also choose the bottom rectangle with height $f(x_a')$. In fact, the integrals are defined here as the unique limit of each upper and bottom rectangles sums.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{Integral of derivative}
+\subsubsection{Integral of derivatives}
 
 The fundamental theorem of calculus (FTOC) \cite{wiki_fundamental_theorem_calculus} give us : 
 $$ \int_a^b (\frac{d}{dx}f)dx = f(b) - f(a) $$
@@ -580,9 +582,9 @@ Remember that the two $dx$ are quite not the same and we can not "simplify" by i
 
 But why is it true ?
 
-Let's define $\mathcal{A}(x)_f$ the area of $f$ from $c \in Ker(f)$ as is the first defined value for $f$ with $c \geq 0$, to $x \in Ker(f)$. If $f$ is defined at $0$, then $c=0$. In other words, $\mathcal{A}(x)_f := \int_c^{x}f(x)dx$
+Let's define $\mathcal{A}(x)_f$ the area of $f$ from $c \in f^{-1}$ to $x \in f^{-1}$ where $c \leq x_a$. In other words, $\mathcal{A}(x)_f := \int_c^{x}f(u)du$. The nearly same proof (except for the sign) can be made with $c \geq x_a$.
 
-As $A$ and $A'$ are really close, then, $A' := (x_a+h, f(x_a+h))$ with $h \neq 0$ and $(x+h) \in Ker(f)$.
+As $A$ and $A'$ are really close, then, $A' := (x_a+h, f(x_a+h))$ with $h \neq 0$ and $(x+h) \in f^{-1}$.
 
 The area from $A$ to $A'$ is then : $\mathcal{A}(x_a+h)_f - \mathcal{A}(x_a)_f$
 
@@ -634,7 +636,7 @@ With the usual notations, we have for $f$ continuous on $[a, x]$ :
 
 $$
 \begin{cases}
-F(x) \mapsto \int_a^x f(x)dx \\
+F: x \mapsto \int_a^x f(u)du \text{ with } a \in f^{-1}\\
 \frac{d}{dx}F = f
 \end{cases}
 $$
@@ -700,6 +702,10 @@ Thus, by computing the value of $f$ at $a+\epsilon$ we have the value of $f$ at 
 
 Denote that we can take a dual number as we can take complex number and use it as input for functions $\mathbf{R}^n \rightarrow \mathbf{R}^m$ since all usual operations in the rings $(\mathbf{R},+, \times)$ are defined (see \cite{stackexchange_dual_number_for_scalar_functions}, \cite{pdf_analysis_dual_functions}). We just need to use a norm (which is a continuous function) when doing comparison.
 For more exotic rings or operators we will need to define the use of dual number individually.
+
+\bigskip 
+
+Now let's extend the use of dual numbers to scalar field functions.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsubsection{Gradient}
