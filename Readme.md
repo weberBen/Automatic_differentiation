@@ -28,7 +28,7 @@ def f(x, y):
     return sin(x)*y + 7*(x*x)
 ```
 
-Compute the partial derivative $ \frac{\partial{f}}{\partial{x}} $
+Compute the partial derivative $\frac{\partial{f}}{\partial{x}}$
 
 ```Python
 x = DualNumber(4, 1)
