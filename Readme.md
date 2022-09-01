@@ -114,7 +114,7 @@ cgp.draw(display_nodes_value=True)
     />
 </p>
 
-Self reflective operations ($x^2=x*x$, $\frac{x}{x}$, $x+x$, $x-x$, ...) are represented as a single edge in the graph.
+Self reflective operations ( $x^2=x*x$, $\frac{x}{x}$, $x+x$, $x-x$, ... ) are represented as a single edge in the graph.
 
 You can set the `label` option when declaring new `Vector` to render the variable name during the graph drawing (i.e: `x = Vector(14.23, requires_grad=True, label="x")`).
 
