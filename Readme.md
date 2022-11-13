@@ -6,13 +6,6 @@ Implementation of a simple automatic differentiation (forward mode with [dual nu
 
 **The mathematical backgrounds of the forward and backward modes are explained [here](./Automatic_differientiation.pdf)**
 
-## Installation
-
-```bash
-cd app
-pip install -r requirements.txt
-```
-
 ## Forward mode
 
 Import packages :
@@ -203,6 +196,13 @@ def computeJacobianBackward(inputs, func_res):
 ```
 
 See more examples [here](./app/examples/Jacobian.py)
+
+## Installation
+
+```bash
+cd app
+pip install -r requirements.txt
+```
 
 ## Limitations
 
